@@ -1481,7 +1481,7 @@ function loadScript(src){return new Promise((res,rej)=>{const s=document.createE
 function authReload(){try{const u=new URL(location.href);u.searchParams.delete('code');u.hash='';location.replace(u.toString())}catch(e){location.reload()}}
 function authMsg(t){const m=$('aMsg');if(m){m.textContent=t;m.hidden=!t}}
 PLAT.ready=(async()=>{if(!PLAT.sb)return;try{
- if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+ if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js');
  PLAT.client=window.supabase.createClient(EAC.url,EAC.key,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true,autoRefreshToken:true},realtime:{params:{eventsPerSecond:40}}});
  if(window.eaDesk&&eaDesk.onAuth)eaDesk.onAuth(async u=>{try{const c=new URL(u).searchParams.get('code');if(c){authMsg(tt('authWait2'));const {error}=await PLAT.client.auth.exchangeCodeForSession(c);if(error)throw error;authReload()}}catch(e){console.warn('auth',e);authMsg(tt('loginErr'))}});
  const {data}=await PLAT.client.auth.getSession();PLAT.user=data&&data.session?data.session.user:null;

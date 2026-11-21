@@ -1,6 +1,6 @@
-// Sunucu ayarları. Bu bilgiler gizli değildir (Supabase 'anon' anahtarı herkese açık olacak şekilde tasarlanmıştır).
+// Sunucu ayarları. Bu bilgiler gizli değildir (Supabase 'publishable' anahtarı herkese açık olacak şekilde tasarlanmıştır).
 window.EA_CONFIG={
-  url:'',    // Supabase Project URL, ör. https://abcdxyz.supabase.co
-  key:'',    // Supabase anon public key
-  owner:''   // Hazır modelleri yönetecek Google (Gmail) adresi
+  url:'https://jxnshpoouzkjhvwxkxcc.supabase.co',
+  key:'sb_publishable_A71OWR-cSxjTm6z_Z1a89A__7O-3sga',
+  owner:'halilakbinar745@gmail.com'
 };

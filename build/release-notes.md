@@ -1,3 +1,3 @@
-- Oyun içi güncelleme: yeni sürüm çıkınca oyun açılışta kendini günceller ve yeniden başlar.
-- Yazı tipleri artık uygulamanın içinde; başlıklar claude.ai'deki gibi görünür.
-- Lobide sürüm numarası görünür.
+- Oyun sunucusuna bağlandı: açılışta "Google ile giriş yap" ya da "Misafir olarak oyna" seçeneği çıkar.
+- Google ile girenler arkadaşlarıyla oynayabilir; misafirler tek başına ya da aynı bilgisayarda iki kişi oynar.
+- Hazır modeller ve silah modelleri artık bu sunucudan gelir.
