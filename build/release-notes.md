@@ -1,3 +1,1 @@
-- Oyun sunucusuna bağlandı: açılışta "Google ile giriş yap" ya da "Misafir olarak oyna" seçeneği çıkar.
-- Google ile girenler arkadaşlarıyla oynayabilir; misafirler tek başına ya da aynı bilgisayarda iki kişi oynar.
-- Hazır modeller ve silah modelleri artık bu sunucudan gelir.
+- Model yükleme hatası mesajları düzeltildi.

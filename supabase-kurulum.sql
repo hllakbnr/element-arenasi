@@ -25,3 +25,8 @@ create policy "sahip yukler" on storage.objects for insert to authenticated
 drop policy if exists "sahip siler" on storage.objects;
 create policy "sahip siler" on storage.objects for delete to authenticated
   using (bucket_id = 'assets' and (auth.jwt() ->> 'email') = 'SAHIP@gmail.com');
+
+-- Tablo izinleri (yeni Supabase projelerinde otomatik verilmeyebiliyor)
+grant usage on schema public to anon, authenticated;
+grant select on public.models to anon, authenticated;
+grant insert, update, delete on public.models to authenticated;
