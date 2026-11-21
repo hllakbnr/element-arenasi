@@ -1,27 +1,24 @@
-name: Oyunu yayınla
+name: Exe oluştur
 on:
   push:
     branches: [main]
-    paths: ['game/**']
+    paths: ['main.js', 'preload.js', 'package.json', 'app-config.json', 'build/**']
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: write
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.d.outputs.page_url }}
+  windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/setup-node@v4
         with:
-          path: game
-      - id: d
-        uses: actions/deploy-pages@v4
+          node-version: 20
+      - run: npm install
+      - run: npx electron-builder --win nsis --publish never
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Element Arenası 1.0.${{ github.run_number }}
+          body: Windows kurulum dosyası. İndir, çift tıkla, masaüstündeki Element Arenası simgesinden aç.
+          files: dist/ElementArenasi-Kurulum.exe
