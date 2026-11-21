@@ -1,5 +1,4 @@
-- Karakter seçimi artık sadece yüklenen modellerden yapılıyor; varsayılan ninja kaldırıldı.
-- Hazır Modeller bölümünün adı Modeller oldu; karakterler Erkek ve Kadın olarak ayrıldı.
-- Yeni oyuncular için rehber eklendi; ana menüdeki Rehber düğmesinden yeniden açılabilir.
-- İlk girişte karakter seçip element ve silahını belirlemeden oyun başlamıyor.
-- Yan yana modda 2. oyuncu da kendi karakterini seçebiliyor.
+- Akıcılık: saldırılarda ve yeni efektlerde yaşanan kısa takılmalar giderildi (shader'lar artık açılışta bir kez hazırlanıyor).
+- Kıvılcım efektleri tek seferde çiziliyor; kalabalık dövüşlerde daha akıcı.
+- Uzun oyunlarda bellek şişmesi giderildi.
+- Yeni oyuncular için tek seferlik, menüyü adım adım gösteren rehber; menüdeki Rehber düğmesi kaldırıldı.
