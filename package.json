@@ -1,0 +1,24 @@
+{
+  "name": "element-arenasi",
+  "productName": "Element Arenası",
+  "version": "1.0.0",
+  "description": "Element Arenası masaüstü uygulaması",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.elementarenasi.oyun",
+    "productName": "Element Arenası",
+    "artifactName": "ElementArenasi-Kurulum.${ext}",
+    "files": ["main.js", "preload.js", "app-config.json", "game/**"],
+    "protocols": [{ "name": "Element Arenasi", "schemes": ["elementarenasi"] }],
+    "win": { "target": "nsis", "icon": "build/icon.png" },
+    "nsis": { "oneClick": true, "perMachine": false, "createDesktopShortcut": "always", "createStartMenuShortcut": true, "shortcutName": "Element Arenası" }
+  }
+}
