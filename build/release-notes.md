@@ -1,9 +1,4 @@
-- Düşman can çubukları daha parlak ve belirgin.
-- Botlara karşı takım modunda artık güçlendiriciler, jetonlar ve her ustadan sonra dükkân var; herkes kendi jetonunu toplar.
-- Takım modunda dalga başında sadece oda sahibinin canı artmıyor; can sadece güçlendirici ve dükkânla artar.
-- Takım modunda katılanlar da düşmanı tutup fırlatabiliyor.
-- Çok oyunculuda ölüm ekranı ve takım arkadaşını izleme kamerası.
-- VS modunda tur arası bulanık bekleme ekranı: puanı kimin aldığı ve skor gösteriliyor, harita arkada yenileniyor.
-- Arena artık Başlat'ta seçiliyor (tek kişilik, yan yana ve oda kurarken); lobi arka planı her açılışta rastgele.
-- Odalar herkese açık ya da özel (kodla girilir) olabiliyor.
-- Ayarlar'da Hesap bölümü: oturum aç, kapat, başka Gmail ile gir.
+- Düşman modelleri artık oyunun sahibi tarafından arena arena ayarlanıyor ve herkese aynı görünüyor (çok oyunculuda da).
+- Modeller bir kez indirilip bilgisayarda saklanıyor; sonraki girişlerde tekrar inmiyor.
+- Çok oyunculuda arkadaşlarının karakter modelleri her maçta yeniden inmiyor.
+- Model dosyaları yaklaşık 
