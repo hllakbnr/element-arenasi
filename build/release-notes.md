@@ -1,3 +1,5 @@
-- Hazır modellerde silah tutuşları düzeltildi: tırpan artık iki elle çapraz tutuluyor.
-- Katana bekleme duruşunda öne doğru kalkık tutuluyor.
-- Ninja yıldızları elin içine girmeden, bir ucundan tutuluyor.
+- Karakter seçimi artık sadece yüklenen modellerden yapılıyor; varsayılan ninja kaldırıldı.
+- Hazır Modeller bölümünün adı Modeller oldu; karakterler Erkek ve Kadın olarak ayrıldı.
+- Yeni oyuncular için rehber eklendi; ana menüdeki Rehber düğmesinden yeniden açılabilir.
+- İlk girişte karakter seçip element ve silahını belirlemeden oyun başlamıyor.
+- Yan yana modda 2. oyuncu da kendi karakterini seçebiliyor.
