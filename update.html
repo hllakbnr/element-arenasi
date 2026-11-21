@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Element Arenası · Güncelleme</title>
+<link rel="stylesheet" href="game/fonts/fonts.css">
+<style>
+:root{--bg:#070b18;--ink:#efe6d2;--dim:#a69c8a;--gold:#d6a24a;--gold2:#f0c873;--line:rgba(214,162,74,.42);--display:"Shojumaru","Cinzel",Georgia,serif;--ui:"Barlow Condensed","Arial Narrow",Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(1100px 620px at 50% 0%,#1a2347 0%,var(--bg) 62%) fixed,var(--bg);color:var(--ink);font-family:var(--ui);display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none}
+.ring{position:fixed;width:900px;height:900px;border-radius:50%;border:2px solid rgba(214,162,74,.12);left:50%;top:58%;transform:translate(-50%,-50%);animation:spin 40s linear infinite}
+.ring.b{width:620px;height:620px;border-style:dashed;animation-duration:26s;animation-direction:reverse}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.box{position:relative;width:min(560px,90vw);text-align:center;padding:34px 30px 28px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(20,26,46,.92),rgba(8,11,22,.95));box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.orn{display:flex;align-items:center;justify-content:center;gap:14px;color:var(--gold);letter-spacing:.35em;font-size:13px;text-transform:uppercase}
+.orn:before,.orn:after{content:"";width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}.orn:after{transform:scaleX(-1)}
+h1{font-family:var(--display);font-weight:400;color:var(--gold);font-size:40px;line-height:1.1;margin:14px 0 6px;text-shadow:0 2px 24px rgba(214,162,74,.25)}
+.sub{color:var(--dim);font-size:18px;letter-spacing:.06em;min-height:1.3em}
+.ver{display:inline-block;margin-top:12px;padding:3px 12px;border:1px solid var(--line);border-radius:999px;color:var(--gold2);font-size:15px;letter-spacing:.08em}
+.bar{margin:22px 0 8px;height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(214,162,74,.25)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b8862f,var(--gold2));transition:width .25s}
+.bar.ind i{width:35%;animation:ind 1.2s ease-in-out infinite}
+@keyframes ind{0%{transform:translateX(-100%)}100%{transform:translateX(290%)}}
+.pct{display:flex;justify-content:space-between;color:var(--dim);font-size:15px;letter-spacing:.04em}
+.notes{margin-top:18px;text-align:left;max-height:160px;overflow:auto;padding:12px 14px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:16px;line-height:1.45;white-space:pre-line}
+.notes b{display:block;color:var(--gold);font-weight:600;letter-spacing:.06em;margin-bottom:4px}
+.lock{margin-top:16px;color:var(--dim);font-size:14px}
+.btn{margin-top:16px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1b1206;border:0;border-radius:6px;font:700 18px var(--ui);letter-spacing:.08em;text-transform:uppercase;padding:10px 26px;cursor:pointer}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.ring,.bar.ind i{animation:none}}
+</style>
+</head>
+<body>
+<div class="ring"></div><div class="ring b"></div>
+<main class="box" role="status" aria-live="polite">
+  <div class="orn">Element Arenası</div>
+  <h1 id="t"></h1>
+  <div class="sub" id="s"></div>
+  <span class="ver" id="v" hidden></span>
+  <div class="bar ind" id="bar"><i id="fill"></i></div>
+  <div class="pct"><span id="p1"></span><span id="p2"></span></div>
+  <div class="notes" id="notes" hidden><b id="nt"></b><span id="nb"></span></div>
+  <button class="btn" id="retry" hidden></button>
+  <div class="lock" id="lock" hidden></div>
+</main>
+<script>
+const L=(()=>{try{return JSON.parse(localStorage.getItem('ea-set')||'{}').lang==='en'?'en':'tr'}catch(e){return 'tr'}})();
+const T={tr:{check:'Güncellemeler denetleniyor',checkS:'Lütfen bekle…',found:'Yeni güncelleme geldi',foundS:'Yeni sürüm indiriliyor',ready:'Güncelleme hazır',readyS:'Kuruluyor, oyun yeniden başlıyor…',err:'Güncelleme indirilemedi',errS:'İnternet bağlantını kontrol edip tekrar dene.',retry:'Tekrar dene',notes:'Bu sürümde neler var',lock:'Güncelleme bitmeden oyuna girilemez.',ver:'Sürüm '},
+ en:{check:'Checking for updates',checkS:'Please wait…',found:'A new update is here',foundS:'Downloading the new version',ready:'Update ready',readyS:'Installing, the game will restart…',err:'Could not download the update',errS:'Check your connection and try again.',retry:'Try again',notes:'What\'s new',lock:'You can play once the update is finished.',ver:'Version '}}[L];
+const $=id=>document.getElementById(id),mb=b=>(b/1048576).toFixed(1)+' MB';
+function show(o){o=o||{st:'check'};const st=o.st;
+ $('t').textContent=T[st==='prog'?'found':st]||T.check;$('s').textContent=T[(st==='prog'?'found':st)+'S']||T.checkS;
+ if(o.v){$('v').textContent=T.ver+o.v;$('v').hidden=false}
+ if(o.notes!=null&&o.notes.trim()){$('nt').textContent=T.notes;$('nb').textContent=o.notes.trim();$('notes').hidden=false}
+ $('lock').textContent=T.lock;$('lock').hidden=st==='check';
+ const bar=$('bar');$('retry').hidden=st!=='err';$('retry').textContent=T.retry;
+ if(st==='prog'){bar.classList.remove('ind');const p=Math.max(0,Math.min(100,o.pct||0));$('fill').style.width=p.toFixed(1)+'%';$('p1').textContent=Math.round(p)+'%';$('p2').textContent=o.total?mb(o.done||0)+' / '+mb(o.total)+(o.bps?'  ·  '+mb(o.bps)+'/s':''):''}
+ else if(st==='ready'){bar.classList.remove('ind');$('fill').style.width='100%';$('p1').textContent='100%';$('p2').textContent=''}
+ else if(st==='err'){bar.classList.remove('ind');$('p1').textContent='';$('p2').textContent=''}
+ else{bar.classList.add('ind');$('p1').textContent='';$('p2').textContent=''}}
+show();
+if(window.eaDesk){eaDesk.onUpdate(show);eaDesk.updateState().then(s=>{if(s)show(s)});$('retry').onclick=()=>{$('retry').hidden=true;eaDesk.retryUpdate()}}
+</script>
+</body>
+</html>

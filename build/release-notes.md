@@ -1,0 +1,3 @@
+- Oyun içi güncelleme: yeni sürüm çıkınca oyun açılışta kendini günceller ve yeniden başlar.
+- Yazı tipleri artık uygulamanın içinde; başlıklar claude.ai'deki gibi görünür.
+- Lobide sürüm numarası görünür.
