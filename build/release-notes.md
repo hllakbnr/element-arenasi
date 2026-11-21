@@ -1,4 +1,9 @@
-- Akıcılık: saldırılarda ve yeni efektlerde yaşanan kısa takılmalar giderildi (shader'lar artık açılışta bir kez hazırlanıyor).
-- Kıvılcım efektleri tek seferde çiziliyor; kalabalık dövüşlerde daha akıcı.
-- Uzun oyunlarda bellek şişmesi giderildi.
-- Yeni oyuncular için tek seferlik, menüyü adım adım gösteren rehber; menüdeki Rehber düğmesi kaldırıldı.
+- Düşman can çubukları daha parlak ve belirgin.
+- Botlara karşı takım modunda artık güçlendiriciler, jetonlar ve her ustadan sonra dükkân var; herkes kendi jetonunu toplar.
+- Takım modunda dalga başında sadece oda sahibinin canı artmıyor; can sadece güçlendirici ve dükkânla artar.
+- Takım modunda katılanlar da düşmanı tutup fırlatabiliyor.
+- Çok oyunculuda ölüm ekranı ve takım arkadaşını izleme kamerası.
+- VS modunda tur arası bulanık bekleme ekranı: puanı kimin aldığı ve skor gösteriliyor, harita arkada yenileniyor.
+- Arena artık Başlat'ta seçiliyor (tek kişilik, yan yana ve oda kurarken); lobi arka planı her açılışta rastgele.
+- Odalar herkese açık ya da özel (kodla girilir) olabiliyor.
+- Ayarlar'da Hesap bölümü: oturum aç, kapat, başka Gmail ile gir.
