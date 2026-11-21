@@ -1,1 +1,3 @@
-- Model yükleme hatası mesajları düzeltildi.
+- Hazır modellerde silah tutuşları düzeltildi: tırpan artık iki elle çapraz tutuluyor.
+- Katana bekleme duruşunda öne doğru kalkık tutuluyor.
+- Ninja yıldızları elin içine girmeden, bir ucundan tutuluyor.

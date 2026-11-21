@@ -825,7 +825,7 @@ function addWeapon(W,hR,hL,M,o){const wg=piv(hR,0,0,0);wg.rotation.x=-.45;let wg
   part(geo('scn'+kk,()=>new T.CylinderGeometry(HR*.7,HR*.7,.22*L,8)),wood,wg,0,-.62*L,.11*L).rotation.x=Math.PI/2;
   part(geo('scc'+kk,()=>new T.CylinderGeometry(HR*1.35,HR*1.35,.14*L,10)),M.trim,wg,0,-1.52*L,0);
   const hd=piv(wg,0,-1.52*L,0);hd.rotation.x=-Math.PI/2;segs(hd,M.steel,9,.95*L,.2*L,.05*L,.03*L,-.13,0,M.glow)}}
- if(W==='shuriken'){const sc=L;const a=part(starGeo(),M.steel,wg,0,-.06*L,.03*L);a.rotation.y=Math.PI/2;a.scale.setScalar(sc);wg2=piv(hL,0,0,0);const b2=part(starGeo(),M.steel,wg2,0,-.06*L,.03*L);b2.rotation.y=Math.PI/2;b2.scale.setScalar(sc)}
+ if(W==='shuriken'){const sc=L,sy=o&&o.ch?-.15*L:-.06*L,sz=o&&o.ch?0:.03*L;const a=part(starGeo(),M.steel,wg,0,sy,sz);a.rotation.y=Math.PI/2;a.scale.setScalar(sc);wg2=piv(hL,0,0,0);const b2=part(starGeo(),M.steel,wg2,0,sy,sz);b2.rotation.y=Math.PI/2;b2.scale.setScalar(sc)}
  return{wg,wg2,nun}}
 
 let STARG=null;function starGeo(){if(STARG)return STARG;const s_=new T.Shape(),n=4,R_=.17,r_=.05;for(let i=0;i<n*2;i++){const a=i/(n*2)*TAU,q=i%2?r_:R_;i?s_.lineTo(Math.cos(a)*q,Math.sin(a)*q):s_.moveTo(Math.cos(a)*q,Math.sin(a)*q)}
@@ -841,7 +841,7 @@ function gripQ(ax,rx){if(!ax)return new T.Quaternion().setFromEuler(new T.Euler(
 function handAnchor(F,par,pos,q){F.root.updateMatrixWorld(true);const a=new T.Group();par.add(a);const ri=new T.Matrix4().copy(F.root.matrixWorld).invert(),pr=new T.Matrix4().multiplyMatrices(ri,par.matrixWorld).invert(),
  want=new T.Matrix4().compose(new T.Vector3(pos[0],pos[1],pos[2]),q,new T.Vector3(1,1,1));new T.Matrix4().multiplyMatrices(pr,want).decompose(a.position,a.quaternion,a.scale);return a}
 function armWeapon(F,L,pR,gR,pL,gL){if(!L||!L.wpn||L.wpn==='none'||!gR||!gR.c)return;try{const W=L.wpn;gL=gL&&gL.c?gL:{c:[-gR.c[0],gR.c[1],gR.c[2]],ax:gR.ax?[-gR.ax[0],gR.ax[1],gR.ax[2]]:null,r:gR.r};
-  const aR=handAnchor(F,pR,gR.c,gripQ(gR.ax,-1.25)),aL=handAnchor(F,pL||pR,gL.c,W==='spearS'?gripQ(null,0):gripQ(gL.ax,-.45)),M=wpnMats(L),k=gR.r?clamp(gR.r/.042,1,1.5):1.1,hr=gR.r?gR.r*.92:.034,r=addWeapon(W,aR,aL,M,{hr,k,custom:true});
+  const aR=handAnchor(F,pR,gR.c,gripQ(gR.ax,-1.25)),aL=handAnchor(F,pL||pR,gL.c,W==='spearS'?gripQ(null,0):gripQ(gL.ax,-.45)),M=wpnMats(L),k=gR.r?clamp(gR.r/.042,1,1.5):1.1,hr=gR.r?gR.r*.92:.034,r=addWeapon(W,aR,aL,M,{hr,k,custom:true,ch:!!gR.ax});
   if(['saber','maul','glaive','axe','xbow','spearS','daggers'].includes(W)){r.wg.rotation.x=0;if(r.wg2&&W!=='spearS')r.wg2.rotation.x=0;r.wg.scale.setScalar(k);if(r.wg2)r.wg2.scale.setScalar(k)}else if(r.wg2)r.wg2.rotation.x=0;
   applySkin(r,W,L);F.wg=r.wg;F.wg2=r.wg2;F.nun=r.nun}catch(e){console.warn('wpn',e)}}
 function buildFighter(L,scale){
@@ -971,7 +971,9 @@ function animRig(F,a,dt,t){
  F.hips.position.y+=(1.02+hy*(F.A?.3:1)-F.hips.position.y)*k;
  if(F.A){const A=F.A,tg=(o,x,z)=>{if(!o)return;sprR(o,x,0,z,wS,dt)};
   const sy_=a.wpn==='scythe'&&!(a.act==='light'||a.act==='heavy'||a.act==='windup'||a.act==='strike'||a.act==='spin'||a.act==='block'||a.act==='aim'),sw_=Math.sin(a.ph||0)*.12*(a.mv||0);
-  tg(A.aR,sy_?-1.2+sw_:clamp(P.sR[0]+.5*P.eR[0]+.875,-3,1.1),A.lowR+(P.sR[2]+.1)*.6);tg(A.aL,sy_?-1.05-sw_:clamp(P.sL[0]+.5*P.eL[0]+.595,-3,1.1),-A.lowL+(P.sL[2]-.15)*.6);
+  const sq_=sy_&&A.scy,kr_=a.wpn==='katana'&&A.ch&&!['light','heavy','windup','strike','spin','block','aim'].includes(a.act)?-.4:0;
+  if(A.scy&&F.wg){if(!A.q0)A.q0=new T.Quaternion();F.wg.quaternion.slerp(sq_?A.scy.q:A.q0,1-Math.exp(-wS*dt))}
+  tg(A.aR,sq_?A.scy.xR+sw_:sy_?-1.2+sw_:clamp(P.sR[0]+.5*P.eR[0]+.875+kr_,-3,1.1),sq_?A.scy.zR:A.lowR+(P.sR[2]+.1)*.6);tg(A.aL,sq_?A.scy.xL+sw_:sy_?-1.05-sw_:clamp(P.sL[0]+.5*P.eL[0]+.595,-3,1.1),sq_?A.scy.zL:-A.lowL+(P.sL[2]-.15)*.6);
   tg(A.lR,clamp(P.lR[0]+.35*P.kR[0]+.008,-1.3,1.1),0);tg(A.lL,clamp(P.lL[0]+.35*P.kL[0]+.008,-1.3,1.1),0);
   const v=P.torso;sprR(A.t,v[0]*.5,v[1]*.6,v[2]*.5,wS,dt)}
  if(a.roll!=null)F.body.rotation.z+=(a.roll-F.body.rotation.z)*(1-Math.exp(-8*dt));
@@ -1410,7 +1412,13 @@ function autoRig(c,B,scale,look){const root=new T.Group();S.add(root);const body
   const me=new T.Mesh(p.geo,mt);me.castShadow=me.receiveShadow=true;me.frustumCulled=false;(node[p.L]||tor).add(me)});
  const J={torso:new T.Object3D()};['neck','sR','eR','sL','eL','lR','kR','lL','kL'].forEach(n=>J[n]=new T.Object3D());root.scale.setScalar(scale||1);
  const F={root,body,hips,cape:null,mats,J,glowM:null,wpn:lk.wpn,fl:0,custom:true,A,hR_:piv(tor,0,0,0),hL_:piv(tor,0,0,0)};
- armWeapon(F,lk,node[1]||tor,B.hcR,node[2]||tor,B.hcL);return F}
+ armWeapon(F,lk,node[1]||tor,B.hcR,node[2]||tor,B.hcL);A.ch=!!(B.hcR&&B.hcR.ax);if(lk.wpn==='scythe'&&A.ch&&B.hcL&&B.hcL.c&&A.aL&&A.aR&&F.wg)try{A.scy=scyPose(F,B.hcL.c)}catch(e){console.warn('scy',e)}return F}
+// tırpan (C elli modeller): sağ el aşağıda, sol el yukarıda; sap iki elin içinden çapraz geçer
+function scyPose(F,cL){const A=F.A,R=A.aR.rotation,Lr=A.aL.rotation,sv=[R.x,R.y,R.z,Lr.x,Lr.y,Lr.z],root=F.root;root.updateMatrixWorld(true);
+ const hl=new T.Vector3(cL[0],cL[1],cL[2]).applyMatrix4(root.matrixWorld).applyMatrix4(new T.Matrix4().copy(A.aL.matrixWorld).invert()),P={xR:-.45,zR:.3,xL:-1.35,zL:-.5};
+ R.set(P.xR,0,P.zR);Lr.set(P.xL,0,P.zL);root.updateMatrixWorld(true);const an=F.wg.parent,d=hl.clone().applyMatrix4(A.aL.matrixWorld).applyMatrix4(new T.Matrix4().copy(an.matrixWorld).invert());
+ const len=d.length();P.q=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,-1,0),d.normalize());P.len=len;
+ R.set(sv[0],sv[1],sv[2]);Lr.set(sv[3],sv[4],sv[5]);root.updateMatrixWorld(true);return P}
 function customRig(c,scale,look,opt){opt=opt||{};if(c.skinned)return skinnedRig(c,scale,look);if(opt.rig!=='off'){const B=autoBuild(c);if(B)return autoRig(c,B,scale,look)}const root=new T.Group();S.add(root);const body=piv(root,0,0,0),hips=piv(body,0,1.02,0),torso=piv(hips,0,.04,0),m=c.tpl.clone(true);m.position.y=-1.06;if(c.flip)m.rotation.y=Math.PI;const jig=piv(torso,0,0,0);jig.add(m);
  const H=2.45,cal=c.cal||{},dims={hip:(cal.hip||.47)*H,sh:(opt.sh||cal.sh||.79)*H,ax:(opt.ax||cal.ax||.15)*H,arm:.31*H};
  if(opt.limbs){const armsOK=cal.armsFree!==false||!!opt.ax,legsOK=cal.legsFree!==false,pitY=Math.min((cal.pit||((opt.sh||cal.sh||.79)-.07))*H,dims.sh-.02*H),sg=segGeoms(c,armsOK?dims.ax:99,legsOK?dims.hip:-1,H,pitY);let gi=0;m.children.forEach(ch=>{if(ch.isMesh&&sg[gi])ch.geometry=sg[gi++]})}
