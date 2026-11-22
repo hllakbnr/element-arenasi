@@ -1,0 +1,11 @@
+{
+  "appId": "com.elementarenasi.oyun",
+  "appName": "Element Arenası",
+  "webDir": "www",
+  "backgroundColor": "#0b0a12",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

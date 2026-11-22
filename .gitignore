@@ -1,2 +1,5 @@
 node_modules/
 dist/
+mobile/www/
+mobile/android/
+*.jks

@@ -1,1 +1,4 @@
-- Kasırga modelleri eski haline döndü; artık içleri boş görünmüyor, modelin kendi tarzında dolu ve renkli dönüyor.
+- Android sürümü geldi! Telefona ElementArenasi.apk olarak kurulabiliyor: yatay tam ekran, solda hareket çubuğu, sağda büyük saldırı tuşları.
+- Telefonda Google ile giriş telefonun tarayıcısında açılıyor ve girişten sonra oyuna geri dönüyor.
+- Telefonda geri tuşu oyunu duraklatıyor; yeni sürüm çıkınca oyunun içinde İndir uyarısı görünüyor.
+- Küçük ekranlarda dokunmatik tuşlar büyüdü, oyun içi bilgi paneli küçüldü.
