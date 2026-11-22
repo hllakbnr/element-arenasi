@@ -8,6 +8,11 @@ on:
       apk:
         description: APK dosyası
         default: ElementArenasi.apk
+      from:
+        description: Önce kurulacak eski sürüm (güncelleme testi, boş bırakılabilir)
+        default: ''
+permissions:
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,6 +27,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download "${{ inputs.tag }}" -R ${{ github.repository }} -p "${{ inputs.apk }}" -O app.apk
+          if [ -n "${{ inputs.from }}" ]; then gh release download "${{ inputs.from }}" -R ${{ github.repository }} -p ElementArenasi.apk -O old.apk; fi
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1); echo "build-tools: $BT"
           $BT/apksigner verify --verbose --print-certs app.apk | head -20 || true
           $BT/aapt2 dump badging app.apk | head -12 || true
@@ -34,6 +40,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             adb shell getprop ro.product.cpu.abilist
+            if [ -f old.apk ]; then adb install old.apk 2>&1 | tee old.txt; fi
             adb install -r app.apk 2>&1 | tee install.txt || true
             adb shell am start -n com.elementarenasi.oyun/.MainActivity || true
             sleep 45
@@ -42,6 +49,14 @@ jobs:
             sleep 15
             adb exec-out screencap -p > shot2.png || true
             adb logcat -d > logcat.txt || true
+            grep -iE "AndroidRuntime|FATAL|GeckoView|Gecko.*error|elementarenasi|Console" logcat.txt | tail -80 || true
+      - name: Ekran görüntülerini paylaş
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view emu-test -R ${{ github.repository }} >/dev/null 2>&1 || gh release create emu-test -R ${{ github.repository }} --prerelease --title "Emülatör testi (otomatik)" --notes "Test görüntüleri"
+          gh release upload emu-test -R ${{ github.repository }} shot1.png shot2.png logcat.txt --clobber || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
