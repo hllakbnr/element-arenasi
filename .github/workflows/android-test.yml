@@ -8,6 +8,9 @@ on:
       apk:
         description: APK dosyası
         default: ElementArenasi.apk
+      api:
+        description: Android API seviyesi
+        default: '34'
       from:
         description: Önce kurulacak eski sürüm (güncelleme testi, boş bırakılabilir)
         default: ''
@@ -33,7 +36,7 @@ jobs:
           $BT/aapt2 dump badging app.apk | head -12 || true
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ inputs.api }}
           arch: x86_64
           target: google_apis
           disable-animations: true
@@ -56,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view emu-test -R ${{ github.repository }} >/dev/null 2>&1 || gh release create emu-test -R ${{ github.repository }} --prerelease --title "Emülatör testi (otomatik)" --notes "Test görüntüleri"
-          gh release upload emu-test -R ${{ github.repository }} shot1.png shot2.png logcat.txt --clobber || true
+          for f in shot1.png shot2.png logcat.txt; do cp $f api${{ inputs.api }}-$f 2>/dev/null; done; gh release upload emu-test -R ${{ github.repository }} api${{ inputs.api }}-* --clobber || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
