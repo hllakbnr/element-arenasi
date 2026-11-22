@@ -1,2 +1,1 @@
-- Kasırgalar baştan yapıldı: artık içi dolu, parlak bir çekirdek, dönen ışık şeritleri ve halkalarla dönüyor.
-- Her elementin kasırgası farklı: ateşte alev girdabı, yıldırımda lacivert gövde ve çakan altın şimşekler, toprakta etrafında dönen kayalar, buzda uçuşan buz kristalleri.
+- Kasırga modelleri eski haline döndü; artık içleri boş görünmüyor, modelin kendi tarzında dolu ve renkli dönüyor.
