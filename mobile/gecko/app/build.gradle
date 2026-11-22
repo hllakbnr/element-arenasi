@@ -20,6 +20,8 @@ android {
             storePassword System.getenv('EA_KS_PASS')
             keyAlias 'ea'
             keyPassword System.getenv('EA_KS_PASS')
+            enableV1Signing true
+            enableV2Signing true
         }
     }
     buildTypes {
@@ -41,6 +43,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    // Motor dosyaları sıkıştırılmış dursun: APK ~3 kat küçülür (kurulumda bir kez açılır)
+    packaging { jniLibs { useLegacyPackaging true } }
     lint { checkReleaseBuilds false; abortOnError false }
 }
 
