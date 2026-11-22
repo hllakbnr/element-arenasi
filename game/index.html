@@ -1058,20 +1058,68 @@ function spjModel(c1,c2){if(!SPJ.pr)return null;try{const ins=instGLB(SPJ.pr),ro
  root.traverse(o=>{if(!o.isMesh)return;const om=o.material;o.geometry.computeBoundingBox();const gb=o.geometry.boundingBox,glow=gb.max.y-gb.min.y<.01;const m=new T.MeshBasicMaterial({color:glow?c2:c1,map:spjGray(om&&om.map),transparent:true,opacity:glow?.95:.82,alphaTest:.05,side:T.DoubleSide,depthWrite:false,blending:glow?T.AdditiveBlending:T.NormalBlending});o.material=m;mats.push(m);o.castShadow=false;o.frustumCulled=false;if(!first)first=o});
  const clip=(SPJ.pr.clips||[])[0];if(clip&&first){const mx=new T.AnimationMixer(root),ac=mx.clipAction(clip);ac.setLoop(T.LoopRepeat,Infinity);ac.timeScale=2.2;ac.play();let last=0;first.onBeforeRender=()=>{const t=performance.now();mx.update(last?Math.min(.05,(t-last)/1000):0);last=t}}
  return{w,mats}}catch(e){console.warn('spj',e);return null}}
+/* ===== KASIRGA: kodla çizilir, her elementin kendi görünüşü var ===== */
+const VXT={};
+function vxTex(){if(VXT.sw)return VXT;
+ // dönen şeritler: yatayda kesintisiz, üstte ve altta yumuşakça kaybolur
+ VXT.sw=cvTex(512,256,(x,w,h)=>{x.clearRect(0,0,w,h);for(let i=0;i<46;i++){const s=rnd()*w,sl=w*(.28+rnd()*.25),y0=h*(.05+rnd()*.25),y1=h*(.75+rnd()*.22),lw=2+rnd()*9,a=.35+rnd()*.65;
+   for(const o of [-w,0,w]){const g=x.createLinearGradient(s+o,y1,s+o+sl,y0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.45,`rgba(255,255,255,${a})`);g.addColorStop(1,'rgba(255,255,255,0)');x.strokeStyle=g;x.lineWidth=lw;x.lineCap='round';x.beginPath();x.moveTo(s+o,y1);x.quadraticCurveTo(s+o+sl*.6,(y0+y1)/2+10,s+o+sl,y0);x.stroke()}}
+  const m=x.createLinearGradient(0,0,0,h);m.addColorStop(0,'rgba(0,0,0,1)');m.addColorStop(.16,'rgba(0,0,0,0)');m.addColorStop(.86,'rgba(0,0,0,0)');m.addColorStop(1,'rgba(0,0,0,1)');x.globalCompositeOperation='destination-out';x.fillStyle=m;x.fillRect(0,0,w,h)},{lin:1});
+ // gövde: daha yoğun, bulut gibi doku
+ VXT.body=cvTex(256,256,(x,w,h)=>{x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,0,w,h);for(let i=0;i<70;i++){const s=rnd()*w,y=rnd()*h,l=40+rnd()*120,a=.25+rnd()*.6;for(const o of [-w,0,w]){x.strokeStyle=`rgba(255,255,255,${a})`;x.lineWidth=3+rnd()*10;x.lineCap='round';x.beginPath();x.moveTo(s+o,y);x.lineTo(s+o+l,y-l*.45);x.stroke()}}
+  const m=x.createLinearGradient(0,0,0,h);m.addColorStop(0,'rgba(0,0,0,1)');m.addColorStop(.2,'rgba(0,0,0,0)');m.addColorStop(.85,'rgba(0,0,0,0)');m.addColorStop(1,'rgba(0,0,0,1)');x.globalCompositeOperation='destination-out';x.fillStyle=m;x.fillRect(0,0,w,h)},{lin:1});
+ // çekirdek: ortası parlak, uçları sönük
+ VXT.core=cvTex(64,256,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.25,'rgba(255,255,255,.85)');g.addColorStop(.6,'rgba(255,255,255,1)');g.addColorStop(.92,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},{lin:1});
+ // şerit: iki ucu sönük, kenarları yumuşak
+ VXT.rib=cvTex(256,32,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.3,'rgba(255,255,255,1)');g.addColorStop(.85,'rgba(255,255,255,.8)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);
+  const m=x.createLinearGradient(0,0,0,h);m.addColorStop(0,'rgba(0,0,0,1)');m.addColorStop(.4,'rgba(0,0,0,0)');m.addColorStop(.6,'rgba(0,0,0,0)');m.addColorStop(1,'rgba(0,0,0,1)');x.globalCompositeOperation='destination-out';x.fillStyle=m;x.fillRect(0,0,w,h)},{lin:1});
+ VXT.glow=cvTex(128,128,(x,w,h)=>{const g=x.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},{lin:1});
+ VXT.ring=cvTex(128,128,(x,w,h)=>{const g=x.createRadialGradient(w/2,h/2,w*.3,w/2,h/2,w/2);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.7,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},{lin:1});
+ return VXT}
+// sarmal şerit: aşağıdan yukarı genişleyerek döner
+function vxHelix(turns,r0,r1,hgt,wd,n){const p=new Float32Array((n+1)*6),uv=new Float32Array((n+1)*4),ix=[];for(let i=0;i<=n;i++){const t=i/n,a=t*turns*TAU,r=r0+(r1-r0)*t,y=t*hgt,c=Math.cos(a)*r,s_=Math.sin(a)*r,w=wd*(.4+.6*t);
+  p.set([c,y-w/2,s_,c,y+w/2,s_],i*6);uv.set([t,0,t,1],i*4);if(i<n){const k=i*2;ix.push(k,k+1,k+2,k+1,k+3,k+2)}}
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(p,3));g.setAttribute('uv',new T.BufferAttribute(uv,2));g.setIndex(ix);return g}
+// yıldırım: önceden ayrılmış şerit, her birkaç karede yeniden çizilir
+function vxBolt(mat){const N=9,p=new Float32Array(N*2*3*2),g=new T.BufferGeometry(),ix=[];for(let b=0;b<2;b++)for(let i=0;i<N-1;i++){const k=b*N*2+i*2;ix.push(k,k+1,k+2,k+1,k+3,k+2)}
+ g.setAttribute('position',new T.BufferAttribute(p,3));g.setIndex(ix);const m=new T.Mesh(g,mat);m.frustumCulled=false;
+ m.regen=()=>{const y0=.3+rnd()*1.6,y1=y0+1.4+rnd()*2,a0=rnd()*TAU,da=(rnd()-.5)*2.4,pts=[];for(let i=0;i<N;i++){const t=i/(N-1),y=y0+(y1-y0)*t,r=.5+y*.38+(rnd()-.5)*.35,a=a0+da*t+(i&&i<N-1?(rnd()-.5)*.5:0);pts.push([Math.cos(a)*r,y,Math.sin(a)*r])}
+  const w=.07+rnd()*.06;for(let b=0;b<2;b++)for(let i=0;i<N;i++){const [x,y,z]=pts[i],k=(b*N+i)*6;if(b===0)p.set([x,y-w,z,x,y+w,z],k);else{const l=Math.hypot(x,z)||1;p.set([x-z/l*w,y,z+x/l*w,x+z/l*w,y,z-x/l*w],k)}}g.attributes.position.needsUpdate=true;g.computeBoundingSphere()};
+ m.regen();return m}
+const VXK={fire:{body:0xd8340a,hi:0xffb347,core:0xfff1c8,rib:0xffe08a},light:{body:0x1b2f86,hi:0xf2c230,core:0xeaf4ff,rib:0xffe066},earth:{body:0x7a5428,hi:0xe0b860,core:0xfff0c8,rib:0xf2d38a},ice:{body:0x58b8e8,hi:0xdff6ff,core:0xffffff,rib:0xbdefff}};
 function buildVortex(c1,c2){
- const g=new T.Group();g.visible=false;g.scale.setScalar(.55);S.add(g);const parts=[];
- const sm=spjModel(c1,c2);if(sm){g.add(sm.w);parts.push([sm.w,9,sm.mats[0]]);
-  for(let i=0;i<3;i++){const m=new T.MeshBasicMaterial({color:i%2?c1:c2,transparent:true,opacity:.6,blending:T.AdditiveBlending,depthWrite:false});const r=new T.Mesh(new T.TorusGeometry(2.4+i*.45,.03,6,80,TAU*.7),m);r.position.y=.6+i*1.1;r.rotation.x=Math.PI/2;g.add(r);parts.push([r,-6-i*2,m,1])}
-  const gm=new T.MeshBasicMaterial({color:c1,transparent:true,opacity:.5,blending:T.AdditiveBlending,depthWrite:false});const gr=new T.Mesh(new T.RingGeometry(.8,3.4,48),gm);gr.rotation.x=-Math.PI/2;gr.position.y=.03;g.add(gr);return{g,parts,light:null,gr}}
- for(let i=0;i<13;i++){const m=new T.MeshBasicMaterial({color:i%3?c1:c2,map:streak,transparent:true,opacity:1,blending:i%2?T.AdditiveBlending:T.NormalBlending,side:T.DoubleSide,depthWrite:false});
-  const rt=.75+i*.2,rb=.3+i*.1,me=new T.Mesh(new T.CylinderGeometry(rt,rb,1,48,1,true,0,TAU*(.55+rnd()*.4)),m);me.position.y=.2+i*.34;me.rotation.y=rnd()*TAU;g.add(me);parts.push([me,7+rnd()*7,m])}
- for(let i=0;i<4;i++){const m=new T.MeshBasicMaterial({color:i%2?c1:c2,transparent:true,opacity:.7,blending:T.AdditiveBlending,depthWrite:false});
-  const r=new T.Mesh(new T.TorusGeometry(2.2+i*.35,.025,6,80,TAU*.7),m);r.position.y=.6+i*.7;r.rotation.x=Math.PI/2+(rnd()-.5)*.35;g.add(r);parts.push([r,-5-rnd()*4,m,1])}
- const gm=new T.MeshBasicMaterial({color:c1,transparent:true,opacity:.5,blending:T.AdditiveBlending,depthWrite:false});const gr=new T.Mesh(new T.RingGeometry(.8,3.4,48),gm);gr.rotation.x=-Math.PI/2;gr.position.y=.03;g.add(gr);
- const light=null;
- const cm=new T.MeshBasicMaterial({color:c2,transparent:true,opacity:.93,side:T.DoubleSide,depthWrite:false}),core=new T.Mesh(new T.CylinderGeometry(1.9,.35,4.4,40,1,true),cm);core.position.y=2.2;g.add(core);parts.push([core,16,cm]);
- const cm2=new T.MeshBasicMaterial({color:c1,map:streak,transparent:true,opacity:1,side:T.DoubleSide,depthWrite:false}),cs=new T.Mesh(new T.CylinderGeometry(2.1,.45,4.6,40,1,true),cm2);cs.position.y=2.25;g.add(cs);parts.push([cs,-11,cm2]);
- return{g,parts,light,gr};
+ const g=new T.Group();g.visible=false;g.scale.setScalar(.55);S.add(g);const parts=[],X=vxTex();
+ const ek=Object.keys(ELEM).find(k=>{const v=vxS(ELEM[k]);return v[0]===c1&&v[1]===c2})||'fire',K=VXK[ek]||{body:c1,hi:c2,core:0xffffff,rib:c2};
+ const mat=(o)=>new T.MeshBasicMaterial(Object.assign({transparent:true,depthWrite:false,side:T.DoubleSide},o));
+ const add=(m,sp,ring,ro)=>{if(ro!=null)m.renderOrder=ro;g.add(m);parts.push([m,sp,m.material,ring?1:0]);return m};
+ const shell=(rt,rb,h,o,sp,ro,rep)=>{const mt=mat(o);if(mt.map&&rep){mt.map=mt.map.clone();mt.map.needsUpdate=true;mt.map.repeat.set(rep,1)}const me=new T.Mesh(new T.CylinderGeometry(rt,rb,h,56,6,true),mt);me.position.y=h/2+.05;return add(me,sp,0,ro)};
+ // 1) içte bembeyaz parlayan çekirdek
+ shell(.34,.14,4.1,{color:K.core,map:X.core,opacity:.75,blending:T.AdditiveBlending},20,1);
+ shell(.8,.28,4.2,{color:K.hi,map:X.core,opacity:.28,blending:T.AdditiveBlending},-16,2);
+ // 2) gövde: elementin ana rengi, dolu görünsün diye normal karışım
+ shell(1.45,.42,4.3,{color:K.body,map:X.body,opacity:1},12,3,2);
+ shell(1.95,.52,4.4,{color:K.body,map:X.body,opacity:.85},-9,4,3);
+ // 3) parlak dönen şeritler
+ shell(1.7,.48,4.35,{color:K.hi,map:X.sw,opacity:.6,blending:T.AdditiveBlending},15,5,3);
+ shell(2.3,.6,4.5,{color:K.hi,map:X.sw,opacity:.45,blending:T.AdditiveBlending},-11,6,2);
+ // 4) sarmal ışık şeritleri
+ for(let i=0;i<4;i++){const me=new T.Mesh(vxHelix(1.3,.45,2.35,4.4,.32,90),mat({color:i%2?K.rib:K.hi,map:X.rib,opacity:.7,blending:T.AdditiveBlending}));me.rotation.y=i*TAU/4;add(me,17+i*1.5,0,7)}
+ // 5) eğik halkalar
+ for(let i=0;i<3;i++){const r=new T.Mesh(new T.TorusGeometry(2.05+i*.32,.035,6,90,TAU*.62),mat({color:i%2?K.hi:K.rib,opacity:.85,blending:T.AdditiveBlending}));r.position.y=.9+i*1.15;r.rotation.x=Math.PI/2;add(r,-7-i*2,1,8)}
+ // 6) yerde parlama ve dalga halkası
+ const gl=new T.Mesh(new T.PlaneGeometry(6.4,6.4),mat({color:K.hi,map:X.glow,opacity:.32,blending:T.AdditiveBlending}));gl.rotation.x=-Math.PI/2;gl.position.y=.04;gl.renderOrder=0;g.add(gl);
+ const gr=new T.Mesh(new T.PlaneGeometry(7.4,7.4),mat({color:K.rib,map:X.ring,opacity:.6,blending:T.AdditiveBlending}));gr.rotation.x=-Math.PI/2;gr.position.y=.06;gr.renderOrder=0;g.add(gr);
+ // 7) elemente özel parçalar
+ const ex=new T.Group();g.add(ex);const bits=[];let bt=0;
+ if(ek==='light'){const ms=[mat({color:0xffffff,opacity:1,blending:T.AdditiveBlending}),mat({color:0xffe066,opacity:1,blending:T.AdditiveBlending}),mat({color:0x9fd0ff,opacity:.95,blending:T.AdditiveBlending})];for(let i=0;i<5;i++){const b=vxBolt(ms[i%3]);b.renderOrder=9;ex.add(b);bits.push(b)}}
+ else if(ek==='earth'){const gm=new T.DodecahedronGeometry(.22,0),mt=new T.MeshLambertMaterial({color:0x8a6a44});for(let i=0;i<10;i++){const m=new T.Mesh(gm,mt);const s_=.6+rnd()*.9;m.scale.set(s_,s_*(.7+rnd()*.5),s_);m.userData={a:rnd()*TAU,r:1.6+rnd()*.9,y:.5+rnd()*3.4,sp:2.5+rnd()*2,rs:rnd()*6};ex.add(m);bits.push(m)}}
+ else if(ek==='ice'){const gm=new T.OctahedronGeometry(.2,0),mt=mat({color:0xe6fbff,opacity:.9,blending:T.AdditiveBlending});for(let i=0;i<12;i++){const m=new T.Mesh(gm,mt);m.scale.set(.6,1.8+rnd(),.6);m.userData={a:rnd()*TAU,r:1.5+rnd()*1,y:.4+rnd()*3.6,sp:3+rnd()*2.5,rs:rnd()*6};m.renderOrder=9;ex.add(m);bits.push(m)}}
+ else if(ek==='fire'){shell(1.15,.36,3.9,{color:0xff6a10,map:X.sw,opacity:.55,blending:T.AdditiveBlending},24,6,4)}
+ const tick=(dt,t)=>{bt-=dt;if(ek==='light'){if(bt<=0){bt=.05+rnd()*.05;bits.forEach(b=>{b.visible=rnd()<.75;if(b.visible)b.regen()})}}
+  else bits.forEach(m=>{const u=m.userData;u.a+=u.sp*dt;m.position.set(Math.cos(u.a)*u.r,u.y+Math.sin(t*3+u.rs)*.25,Math.sin(u.a)*u.r);m.rotation.x+=dt*u.sp;m.rotation.y+=dt*2});
+  gl.material.opacity=.28+Math.sin(t*14)*.06;gr.scale.setScalar(.9+((t*1.6)%1)*.35);gr.material.opacity=.6*(1-((t*1.6)%1))};
+ try{if(typeof R!=='undefined'&&R&&typeof cam!=='undefined'){g.visible=true;R.compile(g,cam);g.visible=false}}catch(e){g.visible=false}
+ return{g,parts,light:null,gr,tick};
 }
 
 /* ===== EFEKTLER ===== */
@@ -2124,7 +2172,7 @@ function view(dt){
   // kasırga
   const v=P.v;v.g.visible=P.spin;VL.intensity=0;F.root.visible=!P.spin;if(P.spin){v.g.position.set(P.x,P.y,P.z);P.spT=(P.spT||0)+dt;const grow=Math.min(1,P.spT*5)*(P.en<12?Math.max(.25,P.en/12):1);v.g.scale.setScalar(.55*(.55+.45*grow));
    v.g.rotation.x+=(((P.mvz||0)*.2)-v.g.rotation.x)*.2;v.g.rotation.z+=((-(P.mvx||0)*.2)-v.g.rotation.z)*.2;
-   v.parts.forEach(([m,sp_,mt,ring],i)=>{m.rotation[ring?'z':'y']+=sp_*dt*(1+.35*Math.sin(T0*3+i));if(!ring){m.scale.set(1+Math.sin(T0*9+i)*.08,1+Math.sin(T0*6+i*1.7)*.12,1+Math.sin(T0*9+i)*.08);m.position.x=Math.sin(T0*5+i*.8)*.14*(i/13);m.position.z=Math.cos(T0*5+i*.8)*.14*(i/13)}else m.rotation.x=Math.PI/2+Math.sin(T0*4+i)*.28});VL.position.set(P.x,1.6,P.z);VL.color.setHex(P.h.vx[0]);VL.intensity=2.5+Math.sin(T0*20)*.6;v.gr.rotation.z+=dt*4;
+   v.parts.forEach(([m,sp_,mt,ring],i)=>{m.rotation[ring?'z':'y']+=sp_*dt*(1+.35*Math.sin(T0*3+i));if(!ring){m.scale.set(1+Math.sin(T0*9+i)*.08,1+Math.sin(T0*6+i*1.7)*.12,1+Math.sin(T0*9+i)*.08);m.position.x=Math.sin(T0*5+i*.8)*.14*(i/13);m.position.z=Math.cos(T0*5+i*.8)*.14*(i/13)}else m.rotation.x=Math.PI/2+Math.sin(T0*4+i)*.28});VL.position.set(P.x,1.6,P.z);VL.color.setHex(P.h.vx[0]);VL.intensity=2.5+Math.sin(T0*20)*.6;if(v.tick)v.tick(dt,T0);
    for(let k=0;k<2;k++){const a=T0*12+k*Math.PI+rnd(),r=.6+rnd()*.9;sparks(P.x+Math.cos(a)*r,.2+rnd()*2.4,P.z+Math.sin(a)*r,P.h.vx[k],1,2,-2)}}
   if(LOC.on&&LOC.P2)renderP2(dt);
   for(const e of E.concat(DY)){const Fe=e.F;
@@ -2272,7 +2320,7 @@ function mpView(dt){const k=1-Math.exp(-14*dt);
  for(const r of Object.values(MP.rp)){if(!r.F||!r.alive)continue;r.x+=(r.tx-r.x)*k;r.z+=(r.tz-r.z)*k;r.y+=(r.ty-r.y)*k;r.vf=r.spin?r.vf+dt*22:ad(r.vf,r.face,1-Math.exp(-18*dt));r.mv+=((r.mvT||0)-r.mv)*k;r.ph+=dt*11*Math.min(1,r.mv);
   const F=r.F;F.root.visible=!r.dead&&!r.spin;F.root.position.set(r.x,r.y,r.z);F.root.rotation.y=r.vf;animRig(F,{mv:r.mv,ph:r.ph,act:r.act,at:r.at,combo:r.combo,air:r.air,wpn:F.wpn,seed:1},dt,T0);
   F.hips.rotation.x=r.flip>0?(1-r.flip)*TAU:0;F.fl-=dt;tint(F,F.fl>0?0x661010:0);
-  r.v.g.visible=r.spin&&!r.dead;if(r.spin){r.v.g.position.set(r.x,r.y,r.z);r.v.parts.forEach(([m,sp_,mt,ring])=>{m.rotation[ring?'z':'y']+=sp_*dt})}
+  r.v.g.visible=r.spin&&!r.dead;if(r.spin){r.v.g.position.set(r.x,r.y,r.z);r.v.parts.forEach(([m,sp_,mt,ring])=>{m.rotation[ring?'z':'y']+=sp_*dt});if(r.v.tick)r.v.tick(dt,T0)}
   r.tag.visible=!r.dead;r.tag.position.set(r.x,r.y+3.25,r.z)}
  for(const g of Object.values(MP.ge)){g.x+=(g.tx-g.x)*k;g.z+=(g.tz-g.z)*k;const sp=Math.hypot(g.tx-g.x,g.tz-g.z);g.mv+=((sp>.05?1:0)-g.mv)*k;g.ph+=dt*10*g.mv;g.vf=ad(g.vf,g.fa,1-Math.exp(-12*dt));
   const F=g.F;F.root.visible=!g.ghost;F.root.position.set(g.x,g.y,g.z);F.root.rotation.y=g.vf;if(!g.frz)animRig(F,{mv:g.mv,ph:g.ph,act:g.act,at:0,wpn:F.wpn,seed:2},dt,T0);
@@ -2381,7 +2429,7 @@ function renderP2(dt){const Q=LOC.P2,F=Q.F;if(Q.spin){Q.sa=(Q.sa||0)+dt*22;Q.vf=
  F.root.visible=!Q.dead&&!Q.spin;F.root.position.set(Q.x,Q.y,Q.z);F.root.rotation.y=Q.vf;
  animRig(F,{roll:clamp(-Math.atan2(Math.sin(Q.face-Q.vf),Math.cos(Q.face-Q.vf))*.4*Q.mv,-.22,.22),bm:Q.act==='block'&&Q.mv>.04,mv:Q.mv,ph:Q.ph,act:Q.act,at:Q.at,combo:Q.combo,air:Q.air,wpn:Q.wpn,seed:3},dt,T0);
  if(Q.flip>0){Q.flip=Math.max(0,Q.flip-dt*2.6);F.hips.rotation.x=(1-Q.flip)*TAU}else F.hips.rotation.x=0;F.fl-=dt;tint(F,F.fl>0?0x661010:BUFF.pow>0?0x3a0a04:0);
- const v=Q.v;v.g.visible=Q.spin&&!Q.dead;if(Q.spin){v.g.position.set(Q.x,Q.y,Q.z);v.g.scale.setScalar(.55);v.parts.forEach(([m,sp_,mt,ring])=>{m.rotation[ring?'z':'y']+=sp_*dt});for(let k=0;k<2;k++){const a=T0*12+k*Math.PI+rnd(),r=.6+rnd()*.9;sparks(Q.x+Math.cos(a)*r,.2+rnd()*2.4,Q.z+Math.sin(a)*r,Q.h.vx[k],1,2,-2)}}
+ const v=Q.v;v.g.visible=Q.spin&&!Q.dead;if(Q.spin){v.g.position.set(Q.x,Q.y,Q.z);v.g.scale.setScalar(.55);v.parts.forEach(([m,sp_,mt,ring])=>{m.rotation[ring?'z':'y']+=sp_*dt});if(v.tick)v.tick(dt,T0);for(let k=0;k<2;k++){const a=T0*12+k*Math.PI+rnd(),r=.6+rnd()*.9;sparks(Q.x+Math.cos(a)*r,.2+rnd()*2.4,Q.z+Math.sin(a)*r,Q.h.vx[k],1,2,-2)}}
  Q.tag.visible=!Q.dead;Q.tag.position.set(Q.x,Q.y+3.2,Q.z);const A=LOC.P1;if(A&&A.tag){A.tag.visible=!A.dead;A.tag.position.set(A.x,A.y+3.2,A.z)}}
 function hudP2(){const Q=LOC.P2;hW('hp2',Q.hp/Q.max*100);$('hp2').parentNode.classList.toggle('low',Q.hp/Q.max<.3);hT('hpt2',Math.ceil(Q.hp)+' / '+Q.max);
  hW('en2',Q.en);$('enb2').classList.toggle('full',Q.en>=100&&!Q.spin);hT('enp2',Math.floor(Q.en)+'%');hW('sk2',(1-Q.sc/(Q.scM||Q.h.scd))*100)}

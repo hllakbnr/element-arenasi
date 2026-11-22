@@ -1,2 +1,2 @@
-- Çok oyunculu düzeltmesi: doğrudan bağlanamayan oyuncular (bazı modem/internet sağlayıcıları) artık yedek yoldan odaya düzgün giriyor; oda sahibi onları görüyor ve dövüş başlatılabiliyor.
-- Odaya Katıl listesi düzeltildi: herkese açık odalar yeniden görünüyor.
+- Kasırgalar baştan yapıldı: artık içi dolu, parlak bir çekirdek, dönen ışık şeritleri ve halkalarla dönüyor.
+- Her elementin kasırgası farklı: ateşte alev girdabı, yıldırımda lacivert gövde ve çakan altın şimşekler, toprakta etrafında dönen kayalar, buzda uçuşan buz kristalleri.
