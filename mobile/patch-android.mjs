@@ -5,7 +5,7 @@ const [ver,code]=[process.argv[2],process.argv[3]];if(!ver||!code)throw new Erro
 const A='android/app/src/main/';
 // 1) Manifest
 let m=fs.readFileSync(A+'AndroidManifest.xml','utf8');
-if(!m.includes('screenOrientation'))m=m.replace(/<activity\b/,'<activity\n            android:screenOrientation="sensorLandscape"\n            android:resizeableActivity="false"');
+if(!m.includes('screenOrientation'))m=m.replace(/<activity\b/,'<activity\n            android:screenOrientation="sensorLandscape"');
 if(!m.includes('android:scheme="elementarenasi"'))m=m.replace(/(<\/intent-filter>)/,'$1\n            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="elementarenasi" />\n            </intent-filter>');
 if(!/android:launchMode="singleTask"/.test(m))m=m.replace(/<activity\b/,'<activity\n            android:launchMode="singleTask"');
 if(!m.includes('REQUEST_INSTALL_PACKAGES'))m=m.replace('</manifest>','    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n</manifest>');

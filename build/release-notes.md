@@ -1,2 +1,1 @@
-- Telefonda kararan ekran için: telefon uygulaması artık daha hafif grafikle başlıyor (düşük grafik, kenar yumuşatma kapalı) ve grafik işlemcisi çökerse toparlanmaya çalışıyor.
-- Telefonda sorun olursa: ekranın sol üst köşesine art arda 5 kez dokun, telefonun bilgilerini ve hataları gösteren bir pencere açılır. Ekran görüntüsünü al ve gönder.
+- Bazı telefonlarda (özellikle Xiaomi/Redmi) oyunun küçük bir kutuya sıkışıp karanlık kalması için düzeltme.
