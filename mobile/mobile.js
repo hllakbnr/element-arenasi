@@ -22,7 +22,8 @@
  function glInfo(){try{var c=document.createElement('canvas'),g=c.getContext('webgl');if(!g)return 'WebGL YOK';var x=g.getExtension('WEBGL_debug_renderer_info');var r=(x?g.getParameter(x.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER))+' · maxTex '+g.getParameter(g.MAX_TEXTURE_SIZE);var l=g.getExtension('WEBGL_lose_context');if(l)l.loseContext();return r}catch(e){return 'hata '+e.message}}
  function G(n){try{return (0,eval)(n)}catch(e){return '?'}}
  function report(){var gl=window.__eaGL||{};var L=[
-  'Sürüm: '+VER+' · '+engine()+' · '+(INFO.model||'')+' Android '+(INFO.android||'?')+' · '+(INFO.abi||'?'),
+  'Sürüm: oyun '+VER+' · uygulama '+(INFO.app||'?')+' (Android katmanı '+(INFO.native||'?')+', '+(INFO.bits||'?')+'-bit)'+(INFO.web?' · indirilen paket '+INFO.web:''),
+  engine()+' · '+(INFO.model||'')+' Android '+(INFO.android||'?')+' · '+(INFO.abi||'?'),
   'Ekran: '+innerWidth+'×'+innerHeight+' · dpr '+devicePixelRatio+' · '+(matchMedia('(orientation:portrait)').matches?'dikey':'yatay'),
   'GPU: '+glInfo(),
   'Grafik çökmesi: '+(gl.lost||0)+' · toparlanma: '+(gl.restored||0)+' · grafik: '+G("typeof SET!=='undefined'?SET.gfx:'?'"),
