@@ -324,6 +324,26 @@ body.touch .mb:hover{padding-left:16px;background:none}
 }
 @media (max-height:400px){body.touch #tc{--u:.92}}
 
+
+/* ===== Telefon: görünür Geri düğmesi ===== */
+#gBack{display:none}
+body.touch #gBack:not([hidden]){display:flex;align-items:center;gap:6px;position:fixed;z-index:60;left:max(10px,env(safe-area-inset-left,0px));top:max(8px,env(safe-area-inset-top,0px));height:40px;padding:0 16px 0 12px;font:inherit;font-size:16px;letter-spacing:.06em;color:var(--ink);background:rgba(10,9,18,.92);border:1px solid var(--gold);border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+body.touch #gBack svg{width:18px;height:18px;fill:none;stroke:var(--gold);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media (max-height:520px){
+ #banner{font-size:clamp(18px,3.4vw,30px)!important}
+ /* karakter ekranı: yan yana iki sütun, liste kendi içinde kayar */
+ body.touch #sel{flex-direction:row!important;overflow:hidden!important;gap:12px;padding-top:max(54px,env(safe-area-inset-top,0px))}
+ body.touch #sel .sell{width:34%;min-width:0;flex:0 0 34%;gap:8px;overflow:auto}
+ body.touch #sel h1{font-size:22px;letter-spacing:.05em}
+ body.touch #sel .sub{display:none}
+ body.touch #sel .btns{display:none}
+ body.touch #sel .cards{grid-template-columns:1fr;gap:6px}
+ body.touch #cust{flex:1 1 auto;width:auto!important;min-width:0;max-height:100%!important;overflow:auto;padding:10px 12px}
+ body.touch .fgrid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+ body.touch #modes,body.touch #locG{padding-top:max(54px,env(safe-area-inset-top,0px))}
+ body.touch .panel{top:max(54px,env(safe-area-inset-top,0px))!important;transform:none!important;max-height:calc(100% - 62px)!important}
+ body.touch .panel .x[data-close]{display:none}
+}
 </style>
 
 <div id="vig"></div>
@@ -346,6 +366,7 @@ body.touch .mb:hover{padding-left:16px;background:none}
  </div>
 <div id="dmg"></div>
 <div id="banner"></div>
+<button id="gBack" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span data-i="back"></span></button>
 <div id="menu" hidden>
  <div class="title"><div class="orn" data-i="orn"></div><h1><span data-i="t1"></span><br><span data-i="t2"></span></h1><div class="sub" data-i="subtitle"></div></div>
  <nav id="side">
@@ -446,7 +467,7 @@ const $=id=>document.getElementById(id),rnd=Math.random,TAU=Math.PI*2;
 const HUDC={};function hT(id,v){if(HUDC[id]!==v){HUDC[id]=v;$(id).textContent=v}}function hW(id,p){p=Math.round(p*10)/10;const k='w'+id;if(HUDC[k]!==p){HUDC[k]=p;$(id).style.width=p+'%'}}function hV(id,v){const k='v'+id;if(HUDC[k]!==v){HUDC[k]=v;$(id).style.setProperty('--cd',v)}}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 /* ===== DİL VE AYARLAR ===== */
-const MOBAPP=document.documentElement.classList.contains('ea-mobile');
+const MOBAPP=document.documentElement.classList.contains('ea-mobile'),SAFEGL=(window.__eaSafe|0);
 let SET={lang:'tr',vol:.7,gfx:'med',shake:true,keys:true,arena:0};try{Object.assign(SET,JSON.parse(localStorage.getItem('ea-set')||'{}'))}catch(e){}
 if(!(()=>{try{return 'gfx' in JSON.parse(localStorage.getItem('ea-set')||'{}')}catch(e){return false}})()){try{if(MOBAPP||matchMedia('(pointer:coarse)').matches&&((navigator.deviceMemory||8)<=4||(navigator.hardwareConcurrency||8)<=4))SET.gfx='low'}catch(e){}}
 const saveSet=()=>{try{localStorage.setItem('ea-set',JSON.stringify(SET))}catch(e){}};
@@ -599,7 +620,7 @@ const SHIELD={skin:0xc98f62,cloth:0x4a3a5a,cloth2:0x221a2c,armor:0x6a6a78,trim:0
 const BOSS={skin:0xc98f62,cloth:0x5c0f12,cloth2:0x18090a,armor:0x2a2326,trim:0xc9a24a,glow:0xff3b2a,helm:'horn',wpn:'axe',paul:'spike',bulk:1.1,cape:0x6d0d10};
 
 /* ===== RENDERER ===== */
-const R=new T.WebGLRenderer({antialias:!MOBAPP,powerPreference:MOBAPP?'default':'high-performance'});
+const R=new (SAFEGL>=1&&T.WebGL1Renderer?T.WebGL1Renderer:T.WebGLRenderer)({antialias:!MOBAPP,powerPreference:SAFEGL>=1?'low-power':MOBAPP?'default':'high-performance'});
 /* grafik işlemcisi çökerse: kaydet, toparlanmaya izin ver */
 window.__eaGL={lost:0,restored:0};R.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();__eaGL.lost++;__eaGL.t=Date.now();try{window.eaDiag&&eaDiag.lost(__eaGL.lost)}catch(x){}},false);R.domElement.addEventListener('webglcontextrestored',()=>{__eaGL.restored++},false);
 R.setPixelRatio(Math.min(devicePixelRatio,1.25));R.setSize(innerWidth,innerHeight);
@@ -1958,8 +1979,8 @@ const AQ={t:0,n:0,base:1,sc:1,cool:3,last:0,lowSh:false};function setPR(){R.setP
 function aqTick(now){if(!AQ.last){AQ.last=now;return}AQ.t+=(now-AQ.last)/1000;AQ.last=now;AQ.n++;if(AQ.t<1)return;const fps=AQ.n/AQ.t;AQ.t=0;AQ.n=0;AQ.cool-=1;if(state!=='play'||document.hidden){AQ.lo=AQ.hi=0;return}
  AQ.lo=fps<40?(AQ.lo||0)+1:0;AQ.hi=fps>57?(AQ.hi||0)+1:0;if(AQ.cool>0)return;
  if(AQ.lo>=3&&AQ.sc>.75){AQ.sc=Math.max(.75,AQ.sc-.1);setPR();AQ.cool=4;AQ.lo=0}else if(AQ.hi>=6&&AQ.sc<1){AQ.sc=Math.min(1,AQ.sc+.05);setPR();AQ.cool=6;AQ.hi=0}}
-function applyGfx(){const g=SET.gfx;AQ.base=g==='low'?.85:g==='high'?Math.min(devicePixelRatio,1.75):Math.min(devicePixelRatio,1.25);setPR();
- const sh=true;if(R.shadowMap.enabled!==sh){R.shadowMap.enabled=sh;S.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)})}
+function applyGfx(){const g=SET.gfx;AQ.base=g==='low'?.85:g==='high'?Math.min(devicePixelRatio,1.75):Math.min(devicePixelRatio,1.25);if(SAFEGL>=1)AQ.base=Math.min(AQ.base,1);setPR();
+ const sh=!(SAFEGL>=1);if(R.shadowMap.enabled!==sh){R.shadowMap.enabled=sh;S.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)})}
  const ms=g==='high'?4096:g==='low'?1024:2048;[window.moonL,sun2].forEach(Lt=>{if(Lt&&Lt.shadow.mapSize.x!==ms){Lt.shadow.mapSize.set(ms,ms);if(Lt.shadow.map){Lt.shadow.map.dispose();Lt.shadow.map=null}}})
  ray.visible=g!=='low'&&SET.arena!==1;$('vig').style.display=g==='low'?'none':''}
 const CPAL={cloth:[0xa3261a,0x3b2f6e,0x5a4a2c,0xb9c7d2,0x1f5a3a,0x1d3f7a,0x2a2a30,0x8a2a6a],armor:[0xd0612a,0x5a4ba0,0x9c8a5e,0x8aa6bd,0x3d6b4a,0x6a7380,0xb08a3a,0x7a2222],trim:[0xe0a845,0xc9c2e8,0xd0a050,0xdfe9f2,0xc0c4cc,0xff7a2a,0x6fd8ff,0x1b1a1f]};
@@ -2574,6 +2595,14 @@ function arCards(id){const box=$(id);if(!box)return;box.innerHTML='';[['a1','m1d
 sel='alaz';buildCards();applyGfx();makeThumbs();applyArena();applyLang();$('pt').appendChild(PR.domElement);showMenu();
 (async()=>{await IDB.open();for(const sl of ['player']){const r=await IDB.get(sl);if(r&&r.buf&&!r.fan){await IDB.del(sl);if(SAVE.mode==='m'){SAVE.mode='c';saveG()}continue}if(r&&r.buf){try{await loadModel(sl,r.buf,r.name,r.flip,r.targets);CM.player.fanId=r.fan;if(sl==='player'){SAVE.mode='m';rebuildHero(sel);heroVis();rebuildVortex(sel);buildCards();PFk=null;if(state==='menu')heroRigs[sel].root.position.set(0,0,0)}}catch(e){}}}await loadNpcs();if(!$('sel').hidden)renderTabs()})().catch(e=>console.warn('load',e)).finally(()=>{CMREADY=true;cmRes();setupMigrate()});requestAnimationFrame(loop);
 
+
+/* ===== Geri: telefon düğmesi, Android geri tuşu ve Esc aynı işi yapar ===== */
+function canBack(){if(state==='menu')return $('menu').classList.contains('pan');return state==='select'||state==='modes'||state==='locG'}
+function goBack(){play&&play('pop');if(state==='menu'){closePanels();return}if(state==='select'){$('selBack').click();return}
+ if(state==='modes'){if(typeof MODESUB!=='undefined'&&MODESUB)modeSub(null);else $('moBack').click();return}if(state==='locG'){$('locBack').click()}}
+$('gBack').onclick=()=>goBack();
+setInterval(()=>{const v=canBack();if($('gBack').hidden===v)$('gBack').hidden=!v},200);
+addEventListener('keydown',e=>{if(e.code==='Escape'&&(state==='modes'||state==='locG')&&!e.repeat){goBack()}});
 ;window.__eaBooted=1;try{var _b=document.getElementById("eaBoot");if(_b)_b.remove()}catch(e){}
 </script>
 

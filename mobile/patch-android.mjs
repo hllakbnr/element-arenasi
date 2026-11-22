@@ -12,42 +12,7 @@ if(!m.includes('REQUEST_INSTALL_PACKAGES'))m=m.replace('</manifest>','    <uses-
 fs.writeFileSync(A+'AndroidManifest.xml',m);
 // 2) MainActivity: tam ekran + ekran açık kalsın
 const pkgDir=A+'java/com/elementarenasi/oyun/';fs.mkdirSync(pkgDir,{recursive:true});
-fs.writeFileSync(pkgDir+'MainActivity.java',`package com.elementarenasi.oyun;
-
-import android.os.Build;
-import android.os.Bundle;
-import android.view.WindowManager;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
-import com.getcapacitor.BridgeActivity;
-
-public class MainActivity extends BridgeActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        registerPlugin(EaUpdatePlugin.class);
-        super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        }
-        immersive();
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) immersive();
-    }
-
-    private void immersive() {
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        c.hide(WindowInsetsCompat.Type.systemBars());
-        c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-    }
-}
-`);
+fs.copyFileSync('MainActivity.java',pkgDir+'MainActivity.java');
 // oyun içi güncelleme eklentisi + indirilen APK için dosya paylaşım yolu
 fs.copyFileSync('EaUpdatePlugin.java',pkgDir+'EaUpdatePlugin.java');
 fs.mkdirSync(A+'res/xml',{recursive:true});fs.writeFileSync(A+'res/xml/file_paths.xml','<?xml version="1.0" encoding="utf-8"?>\n<paths xmlns:android="http://schemas.android.com/apk/res/android">\n    <external-path name="my_images" path="." />\n    <cache-path name="my_cache_images" path="." />\n</paths>\n');

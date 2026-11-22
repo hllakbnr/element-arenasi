@@ -1,1 +1,5 @@
-- Bazı telefonlarda (özellikle Xiaomi/Redmi) oyunun küçük bir kutuya sıkışıp karanlık kalması için düzeltme.
+- Telefonda karanlık ekran için kendini düzelten sistem: ilk açılışta Android penceresinde "Oyun ekranda düzgün görünüyor mu?" diye sorar. "Hayır" dersen farklı bir görüntü ayarıyla kendini yeniden başlatır (3 kademe).
+- Xiaomi gibi telefonların uygulamalara zorla uyguladığı karanlık mod oyunda kapatıldı.
+- Telefonda güncelleme artık Android penceresinden: "Güncelleme var" sorusu, indirme çubuğu ve kurulum ekranı, oyun ekranı karanlık olsa bile görünür.
+- Telefonda her ekranda sol üstte Geri düğmesi var; telefonun geri tuşu da oyun modu ekranında çalışıyor.
+- Karakter ekranı telefonda yeniden düzenlendi: solda karakterin, sağda kendi içinde kayan liste.
