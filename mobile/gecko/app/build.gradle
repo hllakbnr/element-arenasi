@@ -6,7 +6,7 @@ def gv = project.findProperty('gvVersion') ?: '+'
 
 android {
     namespace 'com.elementarenasi.oyun'
-    compileSdk 36
+    compileSdk 37
     defaultConfig {
         applicationId 'com.elementarenasi.oyun'
         minSdk 26
