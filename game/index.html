@@ -1888,7 +1888,7 @@ function wLoop(t){if($('pWpn').hidden){wRaf=0;return}wRaf=requestAnimationFrame(
   if(cTab==='f'&&!$('sel').hidden)renderFan();renderWpn();ensureSkins();skinCheck()},e=>{clearTimeout(tm);FAN.list=[];FAN.err=tt('mErr')+' ('+(e&&e.code||'')+')';renderFan();renderWpn()})}catch(e){FAN.err=tt('fanOff');renderFan()}})();
 
 /* ===== PORTRE ===== */
-const PR=new T.WebGLRenderer({antialias:true,alpha:true});PR.setPixelRatio(Math.min(devicePixelRatio,2));PR.setSize(104,104);PR.outputEncoding=T.sRGBEncoding;PR.toneMapping=T.ACESFilmicToneMapping;
+const PR=SAFEGL>=1?{setPixelRatio(){},setSize(){},render(){},domElement:document.createElement('canvas')}:new T.WebGLRenderer({antialias:true,alpha:true});PR.setPixelRatio(Math.min(devicePixelRatio,2));PR.setSize(104,104);PR.outputEncoding=T.sRGBEncoding;PR.toneMapping=T.ACESFilmicToneMapping;
 const PS=new T.Scene();PS.add(new T.HemisphereLight(0xffffff,0x444455,1.1));const prl=new T.DirectionalLight(0xffffff,1.5);prl.position.set(1.5,2.5,3);PS.add(prl);
 const PC=new T.PerspectiveCamera(30,1,.1,20);PC.position.set(0,2.15,2.7);PC.lookAt(0,2.0,0);let PF=null,PFk=null;
 function portrait(){const key=sel+(useM()?'m'+JSON.stringify(SAVE.cust2||{})+CM.player.id:JSON.stringify(SAVE.cust[sel]||{}));if(PFk!==key){if(PF)PS.remove(PF.root);PF=makeHeroRig(sel);PS.add(PF.root);PF.root.position.set(0,0,0);PF.root.rotation.y=-.35;PFk=key}

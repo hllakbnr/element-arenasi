@@ -1,2 +1,2 @@
-- Telefonda "Oyun ekranda düzgün görünüyor mu?" sorusuna Hayır deyince uygulamanın kapanması düzeltildi: artık kapanmadan bir sonraki görüntü ayarına geçiyor.
-- Soru penceresinde telefonun ekran ve grafik bilgileri de yazıyor; sorun sürerse bu pencerenin ekran görüntüsünü gönder.
+- Telefonda karanlık ekran için otomatik bekçi: oyun açıldıktan sonra telefonun ekranı gerçekten çizip çizmediğini kendisi ölçer. Çizmiyorsa sana sormadan daha sade bir görüntü ayarına geçip oyunu yeniden açar (3 kademe). Hiçbiri olmazsa seni Android System WebView güncelleme sayfasına yönlendirir.
+- Sade görüntü ayarında ikinci 3D çizici (karakter portresi) de kapatılır; bazı ekran kartları bunda takılıyordu.

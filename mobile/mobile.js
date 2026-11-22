@@ -7,7 +7,11 @@
  var VER='__EA_VERSION__',REPO='hllakbnr/element-arenasi',APK='https://github.com/'+REPO+'/releases/latest/download/ElementArenasi.apk',cbs=[],pend=null;
  document.documentElement.classList.add('ea-mobile');
  /* güvenli görüntü seviyesi: "oyunu görüyor musun?" sorusuna Hayır denince artar (oyun bunu okuyup daha sade çizer) */
+ /* Android bekçisi sayfayı ?safe=N ile açarsa o seviyeyi benimse */
+ try{var qs=new URLSearchParams(location.search);if(qs.has('safe')){localStorage.setItem('ea-safe',String(Math.max(0,Math.min(3,parseInt(qs.get('safe'),10)||0))));history.replaceState(null,'',location.pathname)}}catch(e){}
  var SAFE=0;try{SAFE=Math.max(0,Math.min(3,parseInt(localStorage.getItem('ea-safe')||'0',10)||0))}catch(e){}
+ /* kare sayacı: Android bekçisi bununla tarayıcının çizip çizmediğini ölçer */
+ window.__eaRafN=0;(function f(){window.__eaRafN++;requestAnimationFrame(f)})();
  window.__eaSafe=SAFE;if(SAFE)document.documentElement.classList.add('ea-safe');
  /* ---- teşhis: sol üst köşeye 5 kez dokun → Android penceresinde bilgi ---- */
  var DG={errs:[],auth:[],t0:Date.now()};
@@ -74,6 +78,6 @@
   if(!j||!j.tag_name||!newer(j.tag_name,VER))return;if(!(j.assets||[]).some(function(a){return a&&a.name==='ElementArenasi.apk'}))return;return update(j.tag_name)}).catch(function(){})}
 
  /* sıra: önce görüntü kontrolü, sonra güncelleme */
- setTimeout(function(){visCheck().then(check)},5000);
+ setTimeout(function(){visCheck().then(check)},14000);
  if(App)App.addListener('resume',function(){if(U.ready&&(U.state==='perm'||U.state==='installing'))install();else if(!U.run)setTimeout(check,2000)});
 })();
