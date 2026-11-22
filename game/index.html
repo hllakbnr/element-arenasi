@@ -100,6 +100,7 @@ html.ea-mobile body.menu canvas{filter:none!important;transform:none!important;o
 html.ea-mobile *,html.ea-mobile *::before,html.ea-mobile *::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;will-change:auto!important}
 html.ea-mobile body{background:#0b0a12}
 html.ea-safe canvas{transition:none!important}html.ea-safe #vig{display:none}
+body.mpBusy #roomList .rrow,body.mpBusy #jGo,body.mpBusy #hCreate{opacity:.45;pointer-events:none}
 #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%)}
 #menu{position:fixed;inset:0;pointer-events:none}
 #menu .title{position:absolute;left:calc(min(330px,80vw) + (100vw - min(330px,80vw)) / 2);top:38%;transform:translate(-50%,-50%);text-align:center;transition:opacity .3s;width:min(820px,calc(100vw - min(330px,80vw) - 48px))}
@@ -2246,7 +2247,7 @@ function view(dt){
 }
 /* ===== ÇOK OYUNCULU (oda) ===== */
 let EID=0,RT=[];const TG=()=>RT.length?E.concat(RT):E;
-const MP={on:false,room:null,code:'',isHost:false,mode:'coop',cap:2,H:null,HH:null,me:null,order:[],rp:{},ge:{},hitSeq:0,hitsOut:[],pg:{},pkOut:[],lastHit:{},sendT:0,paused:false,freeze:false,lastRn:-1,lastRv:-1,lastPh:'',lastWv:0,prevArena:0,mu:null,models:{},vis:{hz:[],sl:[],bo:[]},hostSeen:0,scanned:false};
+const MP={on:false,room:null,code:'',isHost:false,mode:'coop',cap:2,H:null,HH:null,me:null,order:[],rp:{},ge:{},hitSeq:0,hitsOut:[],pg:{},pkOut:[],lastHit:{},sendT:0,paused:false,freeze:false,lastRn:-1,lastRv:-1,lastPh:'',lastWv:0,prevArena:0,mu:null,models:{},vis:{hz:[],sl:[],bo:[]},hostSeen:0,scanned:false,sid:Math.random().toString(36).slice(2,10),joining:false,jg:0};
 let ROOM=null,ASSETS=null;
 (async()=>{try{if(PLAT.sb){await PLAT.ready;if(PLAT.client&&PLAT.user)ROOM=sbLobby();if(PLAT.client&&PLAT.owner)ASSETS=sbAssets()}else if(window.claude&&claude.use){ROOM=await claude.use('room');ASSETS=await claude.use('assets')}}catch(e){console.warn('room',e)}if(ROOM)ROOM.onPeers(()=>{if(state==='modes'&&!$('joinCfg').hidden)renderRoomList()})})();
 const ACT=['idle','light','heavy','block','spin','hit','windup','strike','aim'];
@@ -2301,8 +2302,9 @@ function clearRemoteVis(){Object.keys(MP.rp).forEach(p=>{const r=MP.rp[p];if(r.F
 function onRoomPeers(ch){if(!MP.room)return;const peers=MP.room.peers(),me=peers.find(p=>p.sameTab);if(me)MP.me=me.peer;
  const hostP=peers.filter(p=>p.presence&&p.presence.H).sort((a,b)=>(a.presence.jt||0)-(b.presence.jt||0))[0];
  if(hostP){MP.HH=hostP.isMe?MP.H:hostP.presence.H;MP.hostPeer=hostP.peer;MP.hostSeen=performance.now();if(!MP.isHost&&MP.HH){MP.mode=MP.HH.md;MP.cap=MP.HH.cap}}
- MP.order=peers.filter(p=>p.presence&&p.presence.jt).sort((a,b)=>(a.presence.jt-b.presence.jt)||(a.peer<b.peer?-1:1)).map(p=>p.peer).slice(0,8);
- for(const p of peers){if(p.sameTab||!p.presence||!p.presence.jt)continue;const rec=ensureRemote(p.peer,p.presence);
+ {const best={};peers.forEach(p=>{if(!p.presence||!p.presence.jt)return;const k=p.presence.sid?'s'+p.presence.sid:'p'+p.peer,o=best[k];if(!o||(p.sameTab&&!o.sameTab)||(!o.sameTab&&p.presence.jt>o.presence.jt))best[k]=p});
+  MP.order=Object.values(best).sort((a,b)=>(a.presence.jt-b.presence.jt)||(a.peer<b.peer?-1:1)).map(p=>p.peer).slice(0,8)}
+ for(const p of peers){if(p.sameTab||!p.presence||!p.presence.jt||MP.order.indexOf(p.peer)<0)continue;const rec=ensureRemote(p.peer,p.presence);
   if(MP.lastHit[p.peer]==null)MP.lastHit[p.peer]=Math.max(0,...((p.presence.hit||[]).map(h=>h[0]||0)));
   for(const h of (p.presence.hit||[])){if(!Array.isArray(h)||!(h[0]>MP.lastHit[p.peer]))continue;MP.lastHit[p.peer]=h[0];const [,to,d,nx,nz,kb,lv,el]=h;const dd=Math.min(80,Math.max(0,+d||0));
    if(to===MP.me)applyPvPHit(dd,(nx||0)/100,(nz||0)/100,lv|0,String(el||''));else if(MP.isHost&&typeof to==='string'&&to[0]==='e'){const id=+to.slice(1),en=E.find(q=>q.id===id);if(en){if((lv|0)===9)remoteGrab(en,p.peer);else applyEnemyHit(en,dd,(nx||0)/100,(nz||0)/100,Math.min(14,+kb||0),lv|0,String(el||''))}}}
@@ -2311,7 +2313,7 @@ function onRoomPeers(ch){if(!MP.room)return;const peers=MP.room.peers(),me=peers
    const hp=Math.max(0,st[8]/10);if(hp<rec.hp-.5&&rec.F)rec.F.fl=.12;if(Math.abs(hp-rec.hp)>.5){rec.hp=hp;rec.max=Math.max(1,st[9]|0);if(rec.tag)tagCanvas(rec)}rec.mvT=st[10]/100;rec.air=!!st[11];
    const dead=!!st[12];if(dead&&!rec.dead&&rec.F&&rec.alive){const cl=rec.F.root.clone(true);S.add(cl);shatter({root:cl},rec.x,rec.z)}rec.dead=dead;rec.flip=(st[13]||0)/100;
    if(!rec.alive){rec.x=rec.tx;rec.z=rec.tz;rec.y=rec.ty;rec.vf=rec.face}rec.alive=true}}
- for(const peer of Object.keys(MP.rp))if(!peers.some(p=>p.peer===peer))dropRemote(peer);
+ for(const peer of Object.keys(MP.rp))if(MP.order.indexOf(peer)<0||!peers.some(p=>p.peer===peer))dropRemote(peer);
  if(MP.HH)mpOnHost(MP.HH);if(state==='room')renderRoom()}
 function mpOnHost(H){if(!H)return;
  if(state==='room'&&H.ph==='scan'&&!MP.scanned)mpScan();
@@ -2330,9 +2332,9 @@ function mpOnHost(H){if(!H)return;
  if(H.ph==='count'){const c=Math.ceil(H.ct||0);if(c!==MP.lastCt&&c>0){MP.lastCt=c;bn(String(c));play('pop')}}
  if(!MP.isHost){if(MP.mode==='coop'){if(H.wv!==MP.lastWv&&H.wv){MP.lastWv=H.wv;if(H.wv%3===0){const MS=MASTERS[(Math.ceil(H.wv/3)-1)%MASTERS.length];bnSub(tx(MS,'n'),tx(MS,'tip'))}else bn(tt('round')+' '+Math.ceil(H.wv/3)+' · '+tt('wave')+' '+(((H.wv-1)%3)+1))}wave=H.wv||0;score=H.scr||0;round=Math.max(1,Math.ceil(wave/3))}
   if(Array.isArray(H.gt))H.gt.forEach((t,i)=>{const g=GATES()[i];if(g&&t>g.t)g.t=t/10});mpSyncGhosts(H.en||[]);mpSyncHaz(H);if(MP.mode==='coop')mpSyncPU(H.pu)}}
-async function mpScan(){MP.scanned=true;MP.room.presence({sc:'wait'});MP.mu=await myModelUrl();MP.room.presence({mu:MP.mu||null,mo:useM()?c2opt(SAVE.cust2):null,lk:shareLook(),el:elOf(sel)});
+async function mpScan(){MP.scanned=true;const r=MP.room;if(!r)return;r.presence({sc:'wait'});MP.mu=await myModelUrl();if(MP.room!==r)return;r.presence({mu:MP.mu||null,mo:useM()?c2opt(SAVE.cust2):null,lk:shareLook(),el:elOf(sel)});
  const t0=performance.now();while(performance.now()-t0<15000){const pend=Object.values(MP.rp).some(r=>r.pr&&r.pr.mu&&!r.model&&r.loading);if(!pend)break;await new Promise(r=>setTimeout(r,250))}
- MP.room.presence({sc:'ok'})}
+ if(MP.room===r)r.presence({sc:'ok'})}
 function enterMatch(){MP.prevArena=SET.arena;SET.arena=(MP.HH&&MP.HH.ar)|0;applyArena();MP.on=true;MP.paused=false;MP.freeze=true;MP.lastRn=-1;MP.lastRv=(MP.HH&&MP.HH.rv)||0;MP.lastPh='';MP.lastWv=0;MP.lastCt=0;
  $('roomS').hidden=true;$('modes').hidden=true;start(sel);P.dead=false;Object.values(MP.rp).forEach(r=>{r.key=null;r.alive=false;r.dead=false});for(const p of MP.room.peers())if(!p.sameTab&&p.presence&&p.presence.jt)ensureRemote(p.peer,p.presence);
  mpSpawnSelf();if(MP.mode!=='coop')$('elx').textContent=tx(P.h,'el')+'  ·  '+tt(myTeam()==='A'?'teamA':'teamB')}
@@ -2413,10 +2415,11 @@ function renderRoomList(){const box=$('roomList');box.innerHTML='';const ps=ROOM
  LANR.list.forEach(h=>row(h,tt('lanTag'),()=>mpJoin(String(h.c).replace(/[^a-z0-9]/g,'').slice(0,6),false,{lanAddr:{ip:h.ip,port:h.port|0}})));
  ps.forEach(p=>{const h=p.presence.h;row(h,'',()=>mpJoin(String(h.c).replace(/[^a-z0-9]/g,'').slice(0,6),false))});
  if(!box.children.length){const n=document.createElement('div');n.className='note';n.textContent=tt('noRooms');box.appendChild(n)}}
-async function mpJoin(code,asHost,cfg){if(!ROOM||!code)return;try{bn(tt('connecting'));const lanH=!!(asHost&&cfg&&cfg.lan),lanA=!asHost&&cfg&&cfg.lanAddr||null;
- const r=PLAT.sb?(asHost?await netHost(code,lanH,lanH?{c:code,hn:pName(),m:cfg.mode,cap:cfg.cap,n:1}:null):await netClient(code,lanA)):await ROOM.join('ea-'+code);MP.lan=!!(PLAT.sb&&(lanH||lanA));MP.room=r;MP.code=code;MP.isHost=asHost;MP.lastHit={};MP.hitsOut=[];MP.hitSeq=0;MP.order=[];MP.HH=null;MP.hostPeer=null;MP.scanned=false;MP.lastListed=-1;
+function joinBusy(on){document.body.classList.toggle('mpBusy',!!on);clearInterval(joinBusy.t);if(on){bn(tt('connecting'));joinBusy.t=setInterval(()=>bn(tt('connecting')),1500)}}
+async function mpJoin(code,asHost,cfg){if(!ROOM||!code||MP.joining||MP.room)return;MP.joining=true;const gen=++MP.jg;joinBusy(true);try{const lanH=!!(asHost&&cfg&&cfg.lan),lanA=!asHost&&cfg&&cfg.lanAddr||null;
+ const r=PLAT.sb?(asHost?await netHost(code,lanH,lanH?{c:code,hn:pName(),m:cfg.mode,cap:cfg.cap,n:1}:null):await netClient(code,lanA)):await ROOM.join('ea-'+code);if(gen!==MP.jg||MP.room||state!=='modes'){try{await r.leave()}catch(e){}return}MP.lan=!!(PLAT.sb&&(lanH||lanA));MP.room=r;MP.code=code;MP.isHost=asHost;MP.lastHit={};MP.hitsOut=[];MP.hitSeq=0;MP.order=[];MP.HH=null;MP.hostPeer=null;MP.scanned=false;MP.lastListed=-1;
   MP.priv=!!(asHost&&cfg&&cfg.priv);MP.encA=null;if(asHost)encPrep(ARSEL);if(asHost){MP.mode=cfg.mode;MP.cap=cfg.cap;MP.H={ph:'room',md:cfg.mode,cap:cfg.cap,ar:ARSEL,w:[0,0],rn:0,rv:0,tm:{}}}else MP.H=null;
-  r.onPeers(onRoomPeers);await r.presence({nm:pName(),dv:TCH.on?'m':'p',el:elOf(sel),lk:shareLook(),jt:Date.now(),sc:'',hit:[],st:null,H:MP.H||null});MP.hostSeen=performance.now();showRoom()}catch(e){bn(tt('joinFail'))}}
+  r.onPeers(()=>{if(MP.room===r)onRoomPeers()});await r.presence({nm:pName(),dv:TCH.on?'m':'p',sid:MP.sid,el:elOf(sel),lk:shareLook(),jt:Date.now(),sc:'',hit:[],st:null,H:MP.H||null});MP.hostSeen=performance.now();joinBusy(false);showRoom()}catch(e){if(gen===MP.jg)bn(tt('joinFail'))}finally{if(gen===MP.jg){MP.joining=false;joinBusy(false)}}}
 async function mpLeave(){const r=MP.room;$('mpRound').hidden=true;$('mpDead').hidden=true;if(state==='shop')closeShopMP();if(MP.on){MP.on=false;clearEnemies();clearRemoteVis();SET.arena=MP.prevArena;applyArena()}Object.keys(MP.rp).forEach(dropRemote);MP.room=null;MP.H=null;MP.HH=null;
  if(ROOM&&MP.isHost&&!MP.lan)ROOM.presence({h:null}).catch(()=>{});MP.lan=false;MP.isHost=false;if(r)try{await r.leave()}catch(e){}$('pause').hidden=true;$('roomS').hidden=true;if(P){P.dead=false;P.F.root.visible=true}showMenu()}
 function showRoom(){useArena(LOBBY_AR);hideAll();$('menu').hidden=true;$('modes').hidden=true;document.body.classList.add('menu');state='room';$('roomS').hidden=false;$('rCode').textContent=MP.code;preview(sel);heroRigs[sel].root.position.set(0,0,0);renderRoom()}
