@@ -43,41 +43,47 @@ jobs:
           java-version: 17
       - run: node tools/fonts.mjs
       - run: node tools/vendor.mjs
-      - name: Android projesini hazırla
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Oyun dosyalarını uygulamaya koy
         working-directory: mobile
+        run: node build-www.mjs "$VER"
+      - name: Firefox motoru (GeckoView) sürümünü seç
         run: |
-          npm install --no-audit --no-fund
-          node build-www.mjs "$VER"
-          npx cap add android
-          node patch-android.mjs "$VER" "${{ github.run_number }}"
-          npx cap sync android
+          GV=$(curl -fsSL https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview/maven-metadata.xml | sed -n 's:.*<release>\(.*\)</release>.*:\1:p' | head -1)
+          [ -n "$GV" ] || GV="+"
+          echo "GeckoView: $GV"
+          echo "GV=$GV" >> "$GITHUB_ENV"
       - name: İmza anahtarı
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE }}
           KSP: ${{ secrets.ANDROID_KEYSTORE_PASS }}
         run: |
+          K=mobile/gecko/app/ea.jks
           if [ -n "$KSP" ] && [ -n "$KS" ]; then
-            echo "$KS" | base64 -d > mobile/android/app/ea.jks
+            echo "$KS" | base64 -d > $K
             echo "EA_KS_PASS=$KSP" >> "$GITHUB_ENV"
-          elif [ -n "$KSP" ] && openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in mobile/ea-release.jks.enc -out mobile/android/app/ea.jks -pass "pass:$KSP"; then
+          elif [ -n "$KSP" ] && openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in mobile/ea-release.jks.enc -out $K -pass "pass:$KSP"; then
             echo "Kalıcı imza anahtarı kullanılıyor."
             echo "EA_KS_PASS=$KSP" >> "$GITHUB_ENV"
           else
             echo "::warning::ANDROID_KEYSTORE_PASS ayarı yok; geçici imza kullanılıyor (güncellemede uygulamayı silip yeniden kurmak gerekir)."
-            rm -f mobile/android/app/ea.jks
-            keytool -genkeypair -keystore mobile/android/app/ea.jks -alias ea -keyalg RSA -keysize 2048 -validity 10000 -storepass geciciImza123 -keypass geciciImza123 -dname "CN=Element Arenasi"
+            rm -f $K
+            keytool -genkeypair -keystore $K -alias ea -keyalg RSA -keysize 2048 -validity 10000 -storepass geciciImza123 -keypass geciciImza123 -dname "CN=Element Arenasi"
             echo "EA_KS_PASS=geciciImza123" >> "$GITHUB_ENV"
           fi
       - name: APK oluştur
-        working-directory: mobile/android
+        working-directory: mobile/gecko
         run: |
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          cp app/build/outputs/apk/release/app-release.apk ../../ElementArenasi.apk
+          gradle assembleRelease --no-daemon --stacktrace -PgvVersion="$GV" -PeaVer="$VER" -PeaCode="${{ github.run_number }}"
+          ls -la app/build/outputs/apk/release/
+          cp app/build/outputs/apk/release/app-arm64-v8a-release.apk ../../ElementArenasi.apk
+          cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk ../../ElementArenasi-32.apk
       - name: Sürüme ekle
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v$VER" ElementArenasi.apk --clobber
+        run: gh release upload "v$VER" ElementArenasi.apk ElementArenasi-32.apk --clobber
 
   discord:
     needs: [windows, android]

@@ -1,2 +1,3 @@
-- Telefonda karanlık ekran için otomatik bekçi: oyun açıldıktan sonra telefonun ekranı gerçekten çizip çizmediğini kendisi ölçer. Çizmiyorsa sana sormadan daha sade bir görüntü ayarına geçip oyunu yeniden açar (3 kademe). Hiçbiri olmazsa seni Android System WebView güncelleme sayfasına yönlendirir.
-- Sade görüntü ayarında ikinci 3D çizici (karakter portresi) de kapatılır; bazı ekran kartları bunda takılıyordu.
+- Android: oyun artık uygulamanın içine gömülü Firefox motoruyla çalışıyor. Telefonun kendi tarayıcı parçası (WebView) bozuk olsa bile oyun açılır; bazı Xiaomi telefonlardaki karanlık/şeritli ekran sorunu böyle çözüldü.
+- Android: 64-bit telefonlar için ElementArenasi.apk, eski 32-bit telefonlar için ElementArenasi-32.apk. Oyun içi güncelleme telefonuna uygun olanı kendisi seçer.
+- Bu geçişte telefondaki oyun ayarları sıfırlanır; hesabınla bir kez yeniden giriş yapman gerekebilir.

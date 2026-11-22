@@ -1,0 +1,50 @@
+// Element Arenası Android: oyun, uygulamanın içine gömülü Firefox motoruyla (GeckoView) çalışır.
+// Böylece telefonun kendi WebView'i bozuk olsa bile oyun aynı şekilde açılır.
+plugins { id 'com.android.application' }
+
+def gv = project.findProperty('gvVersion') ?: '+'
+
+android {
+    namespace 'com.elementarenasi.oyun'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.elementarenasi.oyun'
+        minSdk 26
+        targetSdk 35
+        versionCode Integer.parseInt((project.findProperty('eaCode') ?: '1').toString())
+        versionName((project.findProperty('eaVer') ?: '1.0.0').toString())
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('EA_KS') ?: 'ea.jks')
+            storePassword System.getenv('EA_KS_PASS')
+            keyAlias 'ea'
+            keyPassword System.getenv('EA_KS_PASS')
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    // Her işlemci türü için ayrı, küçük APK (64-bit telefonlar: ElementArenasi.apk)
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a'
+            universalApk false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { checkReleaseBuilds false; abortOnError false }
+}
+
+dependencies {
+    implementation "org.mozilla.geckoview:geckoview:${gv}"
+    implementation 'androidx.core:core:1.13.1'
+}
