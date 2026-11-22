@@ -1,4 +1,5 @@
-- Android sürümü geldi! Telefona ElementArenasi.apk olarak kurulabiliyor: yatay tam ekran, solda hareket çubuğu, sağda büyük saldırı tuşları.
-- Telefonda Google ile giriş telefonun tarayıcısında açılıyor ve girişten sonra oyuna geri dönüyor.
-- Telefonda geri tuşu oyunu duraklatıyor; yeni sürüm çıkınca oyunun içinde İndir uyarısı görünüyor.
-- Küçük ekranlarda dokunmatik tuşlar büyüdü, oyun içi bilgi paneli küçüldü.
+- Telefonda açılışta donma düzeltildi: oyunun ihtiyaç duyduğu kütüphaneler ve yazı tipleri artık uygulamanın içinde, açılırken internetten bir şey beklemiyor. Yine de açılamazsa sebebini gösteren bir ekran ve Tekrar dene düğmesi çıkıyor.
+- Daha az tuş: Tut tuşu artık rakibi tutar, elin doluyken yürüyüp nişan alırsın, tekrar basınca fırlatır (klavyede F, tekrar F).
+- Telefonda Ağır tuşu kalktı: Vur'a dokun = hafif saldırı, basılı tut = ağır saldırı.
+- Kasırga tuşu sadece enerji dolunca parlayarak çıkıyor. Klavyede Kasırga artık Q tuşu.
+- Zayıf telefonlarda ilk açılışta grafik kalitesi kendiliğinden düşük başlıyor (ayarlardan değiştirilebilir).
