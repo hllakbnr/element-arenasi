@@ -25,21 +25,28 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         noForceDark();
-        int s = safe(this);
-        if (s < 2) {
-            if (Build.VERSION.SDK_INT >= 28) {
-                getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        applySafe(safe(this));
+    }
+
+    // Güvenli seviyeyi uygular; uygulamayı yeniden başlatmadan da çağrılabilir (eklenti → UI iş parçacığı)
+    public void applySafe(int s) {
+        try {
+            if (s < 2) {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                }
+                immersive();
+            } else {
+                WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+                WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+                c.show(WindowInsetsCompat.Type.systemBars());
+                if (Build.VERSION.SDK_INT >= 28) {
+                    getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
+                }
             }
-            immersive();
-        } else {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
-        if (s >= 3) {
-            try {
-                WebView w = getBridge().getWebView();
-                if (w != null) w.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-            } catch (Throwable t) { }
-        }
+            WebView w = getBridge() != null ? getBridge().getWebView() : null;
+            if (w != null) w.setLayerType(s >= 3 ? View.LAYER_TYPE_SOFTWARE : View.LAYER_TYPE_NONE, null);
+        } catch (Throwable t) { }
     }
 
     // Bazı telefonlar (ör. Xiaomi) uygulamalara zorla karanlık mod uygular; WebView görüntüsünü bozabilir.

@@ -26,6 +26,7 @@
   'Hesap: '+G("typeof PLAT!=='undefined'?(PLAT.user?'giriş yapıldı':'giriş yok')+(PLAT.err?' (sunucu hatası)':''):'?'")+' · eklentiler: App '+(App?'var':'YOK')+', Browser '+(Browser?'var':'YOK')+', Güncelleme '+(Upd?'var':'YOK'),
   'Giriş adımları: '+(DG.auth.join(' | ')||'-'),
   'Hatalar:\n'+(DG.errs.join('\n')||'-')];return L.join('\n')}
+ function brief(){var gl=window.__eaGL||{},vv=window.visualViewport;return 'v'+VER+' · mod '+SAFE+'/3 · '+innerWidth+'×'+innerHeight+' dpr '+devicePixelRatio+(vv&&vv.scale!==1?' zoom '+vv.scale.toFixed(2):'')+' · ekran '+screen.width+'×'+screen.height+'\nWebView '+((navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||'?')+' · '+glInfo()+'\nçökme '+(gl.lost||0)+' · açıldı '+(window.__eaBooted?'evet':'HAYIR')+(DG.errs.length?' · hata: '+DG.errs[0]:'')}
  function showDiag(){var m=report();if(Upd&&Upd.alert)Upd.alert({title:'Element Arenası · bilgi',message:m}).catch(function(){alert(m)});else alert(m)}
  window.eaDiag={show:showDiag,lost:function(n){if(n>=2&&!DG.lostShown){DG.lostShown=1;showDiag()}},auth:function(m){dpush(DG.auth,m)}};
  addEventListener('pointerdown',function(e){if(e.clientX>90||e.clientY>90)return;var now=Date.now();DG.taps=(DG.taps||[]).filter(function(t){return now-t<3000});DG.taps.push(now);if(DG.taps.length>=5){DG.taps=[];showDiag()}},true);
@@ -51,10 +52,10 @@
  function visOk(){try{return localStorage.getItem('ea-vis')===String(SAFE)}catch(e){return true}}
  function setSafe(n){try{localStorage.setItem('ea-safe',String(n))}catch(e){}return Upd&&Upd.setSafe?Upd.setSafe({level:n}).catch(function(){}):Promise.resolve()}
  function visCheck(){if(visOk())return Promise.resolve();
-  return ask('Element Arenası',T('Oyun ekranda düzgün görünüyor mu? (menü, yazılar, düğmeler)','Can you see the game properly on the screen? (menu, text, buttons)'),T('Evet, görünüyor','Yes, I can see it'),T('Hayır, ekran karanlık','No, the screen is dark')).then(function(yes){
+  return ask('Element Arenası',T('Oyun ekranda düzgün görünüyor mu? (menü, yazılar, düğmeler)','Can you see the game properly on the screen? (menu, text, buttons)')+'\n\n'+brief(),T('Evet, görünüyor','Yes, I can see it'),T('Hayır, ekran karanlık','No, the screen is dark')).then(function(yes){
    if(yes){try{localStorage.setItem('ea-vis',String(SAFE))}catch(e){}return}
-   if(SAFE<3){var n=SAFE+1;return setSafe(n).then(function(){toast(T('Farklı bir görüntü ayarı deneniyor ('+n+'/3)…','Trying another display setting ('+n+'/3)…'));if(Upd&&Upd.restart)return Upd.restart();location.reload()})}
-   return ask(T('Ekran hâlâ karanlık','Screen still dark'),T('Bütün görüntü ayarları denendi. Bir sonraki pencerenin ekran görüntüsünü alıp gönder.\n\n','All display settings were tried. Take a screenshot of the next window and send it.\n\n')+report(),T('Tamam','OK'),T('Baştan dene','Start over')).then(function(ok){if(!ok)return setSafe(0).then(function(){try{localStorage.removeItem('ea-vis')}catch(e){}if(Upd&&Upd.restart)return Upd.restart();location.reload()})})})}
+   if(SAFE<3){var n=SAFE+1;return setSafe(n).then(function(){toast(T('Farklı bir görüntü ayarı deneniyor ('+n+'/3)…','Trying another display setting ('+n+'/3)…'));setTimeout(function(){location.reload()},600)})}
+   return ask(T('Ekran hâlâ karanlık','Screen still dark'),T('Bütün görüntü ayarları denendi. Bir sonraki pencerenin ekran görüntüsünü alıp gönder.\n\n','All display settings were tried. Take a screenshot of the next window and send it.\n\n')+report(),T('Tamam','OK'),T('Baştan dene','Start over')).then(function(ok){if(!ok)return setSafe(0).then(function(){try{localStorage.removeItem('ea-vis')}catch(e){}setTimeout(function(){location.reload()},600)})})})}
 
  /* ---- 2) oyun içi güncelleme: Android penceresiyle sorar, indirir, kurulum ekranını açar ---- */
  var U={tag:'',ready:false,state:'',run:false};

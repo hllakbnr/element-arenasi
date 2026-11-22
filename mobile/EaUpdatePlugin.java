@@ -223,10 +223,16 @@ public class EaUpdatePlugin extends Plugin {
 
     // ---- güvenli görüntü seviyesi (MainActivity açılışta okur) ----
     @PluginMethod
-    public void setSafe(PluginCall call) {
+    public void setSafe(final PluginCall call) {
         Integer lv = call.getInt("level", 0);
-        getContext().getSharedPreferences("ea", android.content.Context.MODE_PRIVATE).edit().putInt("safe", lv == null ? 0 : lv).commit();
-        call.resolve();
+        final int level = lv == null ? 0 : lv;
+        getContext().getSharedPreferences("ea", android.content.Context.MODE_PRIVATE).edit().putInt("safe", level).commit();
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                try { if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).applySafe(level); } catch (Throwable t) { }
+                call.resolve();
+            }
+        });
     }
 
     @PluginMethod
