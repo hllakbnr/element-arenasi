@@ -6,9 +6,30 @@
  var App=plug('App'),Browser=plug('Browser'),Upd=plug('EaUpdate');
  var VER='__EA_VERSION__',REPO='hllakbnr/element-arenasi',APK='https://github.com/'+REPO+'/releases/latest/download/ElementArenasi.apk',cbs=[],pend=null;
  document.documentElement.classList.add('ea-mobile');
+ /* ---- teşhis: sol üst köşeye 5 kez dokun → Android penceresinde bilgi ---- */
+ var DG={errs:[],auth:[],t0:Date.now()};
+ function dpush(l,m){if(l.length<10)l.push(((Date.now()-DG.t0)/1000).toFixed(1)+'s '+String(m).slice(0,180))}
+ addEventListener('error',function(e){var t=e.target;dpush(DG.errs,t&&t!==window&&(t.src||t.href)?'yüklenemedi '+(t.src||t.href):(e.message||'hata')+(e.lineno?' @'+e.lineno:''))},true);
+ addEventListener('unhandledrejection',function(e){var r=e.reason;dpush(DG.errs,'söz: '+(r&&r.message||r))});
+ ['warn','error'].forEach(function(k){var o=console[k];console[k]=function(){try{dpush(DG.errs,k+': '+[].slice.call(arguments).map(function(x){return x&&x.message||x}).join(' '))}catch(e){}return o.apply(console,arguments)}});
+ function glInfo(){try{var c=document.createElement('canvas'),g=c.getContext('webgl');if(!g)return 'WebGL YOK';var x=g.getExtension('WEBGL_debug_renderer_info');var r=(x?g.getParameter(x.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER))+' · maxTex '+g.getParameter(g.MAX_TEXTURE_SIZE);var l=g.getExtension('WEBGL_lose_context');if(l)l.loseContext();return r}catch(e){return 'hata '+e.message}}
+ function G(n){try{return (0,eval)(n)}catch(e){return '?'}}
+ function report(){var gl=window.__eaGL||{};var L=[
+  'Sürüm: '+VER+' · Android WebView '+((navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||'?'),
+  'Ekran: '+innerWidth+'×'+innerHeight+' · dpr '+devicePixelRatio+' · '+(matchMedia('(orientation:portrait)').matches?'dikey':'yatay'),
+  'GPU: '+glInfo(),
+  'Grafik çökmesi: '+(gl.lost||0)+' · toparlanma: '+(gl.restored||0)+' · grafik: '+G("typeof SET!=='undefined'?SET.gfx:'?'"),
+  'Oyun: açıldı='+(window.__eaBooted?'evet':'HAYIR')+' · durum='+G("typeof state!=='undefined'?state:'?'")+' · giriş ekranı='+G("document.getElementById('auth')&&!document.getElementById('auth').hidden?'açık':'kapalı'"),
+  'Hesap: '+G("typeof PLAT!=='undefined'?(PLAT.user?'giriş yapıldı':'giriş yok')+(PLAT.err?' (sunucu hatası)':''):'?'")+' · eklentiler: App '+(App?'var':'YOK')+', Browser '+(Browser?'var':'YOK')+', Güncelleme '+(Upd?'var':'YOK'),
+  'Giriş adımları: '+(DG.auth.join(' | ')||'-'),
+  'Hatalar:\n'+(DG.errs.join('\n')||'-')];return L.join('\n')}
+ function showDiag(){var m=report();if(Upd&&Upd.alert)Upd.alert({title:'Element Arenası · bilgi',message:m}).catch(function(){alert(m)});else alert(m)}
+ window.eaDiag={show:showDiag,lost:function(n){if(n>=2&&!DG.lostShown){DG.lostShown=1;showDiag()}},auth:function(m){dpush(DG.auth,m)}};
+ addEventListener('pointerdown',function(e){if(e.clientX>90||e.clientY>90)return;var now=Date.now();DG.taps=(DG.taps||[]).filter(function(t){return now-t<3000});DG.taps.push(now);if(DG.taps.length>=5){DG.taps=[];showDiag()}},true);
+
  function en(){try{return JSON.parse(localStorage.getItem('ea-set')||'{}').lang==='en'}catch(e){return false}}
- function deliver(u){if(!u||String(u).indexOf('elementarenasi://')!==0)return;try{Browser&&Browser.close()}catch(e){}if(cbs.length)cbs.forEach(function(f){try{f(u)}catch(e){}});else pend=u}
- function openExt(u){if(Browser)return Browser.open({url:u,presentationStyle:'fullscreen'});location.href=u;return Promise.resolve()}
+ function deliver(u){dpush(DG.auth,'geri dönüş '+(String(u).indexOf('code=')>0?'(kod var)':'(kod YOK: '+String(u).slice(0,60)+')')+' dinleyici '+cbs.length);if(!u||String(u).indexOf('elementarenasi://')!==0)return;try{Browser&&Browser.close()}catch(e){}if(cbs.length)cbs.forEach(function(f){try{f(u)}catch(e){}});else pend=u}
+ function openExt(u){dpush(DG.auth,'tarayıcı açıldı '+String(u).split('?')[0].slice(0,60));if(Browser)return Browser.open({url:u,presentationStyle:'fullscreen'});location.href=u;return Promise.resolve()}
  window.eaDesk={version:VER,mobile:true,open:openExt,
   onAuth:function(cb){cbs.push(cb);if(pend){var u=pend;pend=null;setTimeout(function(){cb(u)},0)}},
   notes:function(){return fetch('release-notes.md').then(function(r){return r.ok?r.text():''}).catch(function(){return ''})}};

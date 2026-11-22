@@ -127,4 +127,19 @@ public class EaUpdatePlugin extends Plugin {
             call.reject(e.getMessage() == null ? "hata" : e.getMessage());
         }
     }
+
+    // Teşhis: oyun ekranı çizilemese bile görünen Android penceresi
+    @PluginMethod
+    public void alert(final PluginCall call) {
+        final String t = call.getString("title", "Element Arenası");
+        final String m = call.getString("message", "");
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    new android.app.AlertDialog.Builder(getActivity()).setTitle(t).setMessage(m).setPositiveButton("Tamam", null).show();
+                } catch (Exception e) { }
+                call.resolve();
+            }
+        });
+    }
 }

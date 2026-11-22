@@ -1,3 +1,2 @@
-- Telefonda ekranın kararıp kalması düzeltildi: bazı telefonlarda ekranı karartan bulanıklık efektleri telefon uygulamasında kapatıldı.
-- Telefona oyun içi güncelleme geldi: yeni sürüm çıkınca oyun açılışta güncellemeyi kendisi indirir ve Android'in kurulum ekranını açar. Sadece "Güncelle"ye basman yeterli.
-- Güncellemelerin eski sürümün üstüne kurulabilmesi için uygulama artık her sürümde aynı kalıcı imzayla imzalanıyor.
+- Telefonda kararan ekran için: telefon uygulaması artık daha hafif grafikle başlıyor (düşük grafik, kenar yumuşatma kapalı) ve grafik işlemcisi çökerse toparlanmaya çalışıyor.
+- Telefonda sorun olursa: ekranın sol üst köşesine art arda 5 kez dokun, telefonun bilgilerini ve hataları gösteren bir pencere açılır. Ekran görüntüsünü al ve gönder.
