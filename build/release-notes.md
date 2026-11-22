@@ -1,4 +1,3 @@
-- Düşman modelleri artık oyunun sahibi tarafından arena arena ayarlanıyor ve herkese aynı görünüyor (çok oyunculuda da).
-- Modeller bir kez indirilip bilgisayarda saklanıyor; sonraki girişlerde tekrar inmiyor.
-- Çok oyunculuda arkadaşlarının karakter modelleri her maçta yeniden inmiyor.
-- Model dosyaları yaklaşık yüzde 25 daha küçük indiriliyor.
+- Çok oyunculuda E yetenekleri (ateş topu, yıldırım, deprem, buz) artık herkesin ekranında görünüyor.
+- Yıldırım kasırgası lacivert ağırlıklı, altın sarısı çizgili.
+- Düşman can çubukları: ince siyah çerçeve, içi kan kırmızısı; artık net görünüyor.
