@@ -48,7 +48,10 @@ jobs:
           gradle-version: current
       - name: Oyun dosyalarını uygulamaya koy
         working-directory: mobile
-        run: node build-www.mjs "$VER"
+        run: |
+          node build-www.mjs "$VER"
+          # kurulumsuz güncelleme paketi (uygulama bunu indirip oyunu yeniler)
+          cd gecko/app/src/main/assets/www && zip -qr -X "$GITHUB_WORKSPACE/ElementArenasi-web.zip" . && ls -la "$GITHUB_WORKSPACE/ElementArenasi-web.zip"
       - name: Firefox motoru (GeckoView) sürümünü seç
         run: |
           GV=$(curl -fsSL https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview/maven-metadata.xml | sed -n 's:.*<release>\(.*\)</release>.*:\1:p' | head -1)
@@ -83,7 +86,7 @@ jobs:
       - name: Sürüme ekle
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v$VER" ElementArenasi.apk ElementArenasi-32.apk --clobber
+        run: gh release upload "v$VER" ElementArenasi.apk ElementArenasi-32.apk ElementArenasi-web.zip --clobber
 
   discord:
     needs: [windows, android]

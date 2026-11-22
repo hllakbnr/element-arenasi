@@ -1,10 +1,14 @@
 name: Android emülatör testi
+# Her yayından sonra kendiliğinden çalışır: yeni APK sanal bir telefona kurulup açılır, ekran görüntüsü alınır.
 on:
+  workflow_run:
+    workflows: [Exe oluştur]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
         description: Test edilecek sürüm (ör. v1.0.29)
-        required: true
+        required: false
       apk:
         description: APK dosyası
         default: ElementArenasi.apk
@@ -20,6 +24,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    env:
+      TAG: ${{ inputs.tag }}
+      APK: ${{ inputs.apk || 'ElementArenasi.apk' }}
+      API: ${{ inputs.api || '34' }}
+      FROM: ${{ inputs.from }}
     steps:
       - name: KVM
         run: |
@@ -29,14 +39,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download "${{ inputs.tag }}" -R ${{ github.repository }} -p "${{ inputs.apk }}" -O app.apk
-          if [ -n "${{ inputs.from }}" ]; then gh release download "${{ inputs.from }}" -R ${{ github.repository }} -p ElementArenasi.apk -O old.apk; fi
+          [ -n "$TAG" ] || TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          echo "Test: $TAG $APK (API $API)"
+          gh release download "$TAG" -R ${{ github.repository }} -p "$APK" -O app.apk
+          if [ -n "$FROM" ]; then gh release download "$FROM" -R ${{ github.repository }} -p ElementArenasi.apk -O old.apk; fi
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1); echo "build-tools: $BT"
           $BT/apksigner verify --verbose --print-certs app.apk | head -20 || true
           $BT/aapt2 dump badging app.apk | head -12 || true
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ inputs.api }}
+          api-level: ${{ env.API }}
           arch: x86_64
           target: google_apis
           disable-animations: true
@@ -45,6 +57,7 @@ jobs:
             adb shell getprop ro.product.cpu.abilist
             if [ -f old.apk ]; then adb install old.apk 2>&1 | tee old.txt; fi
             adb install -r app.apk 2>&1 | tee install.txt || true
+            grep -q Success install.txt || echo "::error::APK kurulamadı" 
             adb shell am start -n com.elementarenasi.oyun/.MainActivity || true
             sleep 45
             adb exec-out screencap -p > shot1.png || true
@@ -59,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view emu-test -R ${{ github.repository }} >/dev/null 2>&1 || gh release create emu-test -R ${{ github.repository }} --prerelease --title "Emülatör testi (otomatik)" --notes "Test görüntüleri"
-          for f in shot1.png shot2.png logcat.txt; do cp $f api${{ inputs.api }}-$f 2>/dev/null; done; gh release upload emu-test -R ${{ github.repository }} api${{ inputs.api }}-* --clobber || true
+          for f in shot1.png shot2.png logcat.txt; do cp $f api$API-$f 2>/dev/null; done; gh release upload emu-test -R ${{ github.repository }} api$API-* --clobber || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

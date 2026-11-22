@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.net.Uri;
@@ -33,11 +34,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.security.MessageDigest;
+import java.io.FileInputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /* Uygulamanın içindeki küçük yerel sunucu (yalnızca bu telefondan, 127.0.0.1).
-   - /...        : oyun dosyaları (assets/www)
+   - /...        : oyun dosyaları: indirilen en yeni oyun paketi (files/web/<sürüm>) ya da APK'nın içindeki (assets/www)
    - /__ea/...   : Android köprüsü; her açılışta değişen gizli anahtarla korunur */
 final class LocalServer {
     private static LocalServer I;
@@ -57,6 +62,7 @@ final class LocalServer {
 
     private LocalServer(Context c) {
         app = c;
+        pickWeb();
         byte[] b = new byte[16];
         new SecureRandom().nextBytes(b);
         StringBuilder s = new StringBuilder();
@@ -65,6 +71,141 @@ final class LocalServer {
     }
 
     String base() { return "http://127.0.0.1:" + port + "/"; }
+
+    // ---------------- Kurulumsuz oyun güncellemesi ----------------
+    // Oyunun kendisi (HTML/JS) GitHub sürümündeki ElementArenasi-web.zip ile güncellenir; APK yalnızca
+    // Android tarafı (NATIVE) değişince gerekir. Yeni paket açılamazsa bir sonraki açılışta eski hale dönülür.
+    static final int NATIVE = BuildConfig.EA_NATIVE;
+    private volatile File webRoot = null;
+    private volatile String webTag = null;
+
+    private SharedPreferences sp() { return app.getSharedPreferences("ea", Context.MODE_PRIVATE); }
+
+    private String appVer() {
+        try { return app.getPackageManager().getPackageInfo(app.getPackageName(), 0).versionName; } catch (Exception e) { return "0"; }
+    }
+
+    static boolean newer(String a, String b) {
+        String[] x = a.replaceFirst("^v", "").split("\\."), y = b.replaceFirst("^v", "").split("\\.");
+        for (int i = 0; i < 3; i++) {
+            int p = 0, q = 0;
+            try { p = i < x.length ? Integer.parseInt(x[i]) : 0; } catch (Exception e) { }
+            try { q = i < y.length ? Integer.parseInt(y[i]) : 0; } catch (Exception e) { }
+            if (p != q) return p > q;
+        }
+        return false;
+    }
+
+    private File webDir(String tag) { return new File(new File(app.getFilesDir(), "web"), tag.replaceAll("[^0-9A-Za-z._-]", "")); }
+
+    private static void rmrf(File f) {
+        if (f == null || !f.exists()) return;
+        File[] l = f.listFiles();
+        if (l != null) for (File c : l) rmrf(c);
+        f.delete();
+    }
+
+    private synchronized void pickWeb() {
+        SharedPreferences p = sp();
+        SharedPreferences.Editor e = p.edit();
+        String cur = p.getString("web", null), pend = p.getString("pend", null);
+        // önceki açılışta yeni paket hiç "açıldım" demediyse geri al
+        if (cur != null && p.getBoolean("trial", false)) { e.putString("bad", cur); rmrf(webDir(cur)); cur = null; e.remove("web").remove("trial"); }
+        if (pend != null) {
+            if (!pend.equals(p.getString("bad", "")) && webDir(pend).isDirectory()) { cur = pend; e.putString("web", pend).putBoolean("trial", true); }
+            e.remove("pend");
+        }
+        // APK daha yeniyse (ya da aynıysa) indirilmiş paketi bırak
+        if (cur != null && (!newer(cur, appVer()) || !new File(webDir(cur), "index.html").isFile())) { rmrf(webDir(cur)); cur = null; e.remove("web").remove("trial"); }
+        e.commit();
+        webTag = cur;
+        webRoot = cur != null ? webDir(cur) : null;
+        cleanWeb();
+    }
+
+    private void cleanWeb() {
+        File[] l = new File(app.getFilesDir(), "web").listFiles();
+        String pend = sp().getString("pend", null);
+        if (l != null) for (File f : l) {
+            String n = f.getName();
+            if (n.equals(webTag) || n.equals(pend)) continue;
+            rmrf(f);
+        }
+    }
+
+    private static String sha256(File f) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        InputStream in = new FileInputStream(f);
+        byte[] b = new byte[65536];
+        int n;
+        while ((n = in.read(b)) > 0) md.update(b, 0, n);
+        in.close();
+        StringBuilder s = new StringBuilder();
+        for (byte x : md.digest()) s.append(String.format(Locale.US, "%02x", x));
+        return s.toString();
+    }
+
+    private synchronized JSONObject webUpdate(String url, String tag, String sha) throws Exception {
+        if (!url.startsWith("https://github.com/") || tag.isEmpty()) throw new Exception("adres");
+        if (!newer(tag, webTag != null ? webTag : appVer())) return new JSONObject().put("ok", false).put("error", "eski");
+        if (tag.equals(sp().getString("bad", ""))) return new JSONObject().put("ok", false).put("error", "bozuk");
+        File dir = webDir(tag);
+        if (dir.isDirectory() && tag.equals(sp().getString("pend", null))) return new JSONObject().put("ok", true).put("tag", tag);
+        File zip = new File(app.getCacheDir(), "web.zip"), tmp = new File(dir.getPath() + ".tmp");
+        fetch(url, zip, null);
+        if (sha != null && sha.length() == 64 && !sha.equalsIgnoreCase(sha256(zip))) { zip.delete(); throw new Exception("paket doğrulanamadı"); }
+        rmrf(tmp);
+        tmp.mkdirs();
+        String root = tmp.getCanonicalPath() + File.separator;
+        ZipInputStream z = new ZipInputStream(new FileInputStream(zip));
+        try {
+            ZipEntry en;
+            byte[] b = new byte[65536];
+            while ((en = z.getNextEntry()) != null) {
+                File o = new File(tmp, en.getName());
+                if (!o.getCanonicalPath().startsWith(root)) throw new Exception("paket");
+                if (en.isDirectory()) { o.mkdirs(); continue; }
+                o.getParentFile().mkdirs();
+                OutputStream w = new FileOutputStream(o);
+                int n;
+                while ((n = z.read(b)) > 0) w.write(b, 0, n);
+                w.close();
+            }
+        } catch (Exception e) {
+            rmrf(tmp);
+            throw e;
+        } finally {
+            z.close();
+            zip.delete();
+        }
+        int need = 1;
+        try {
+            InputStream nin = new FileInputStream(new File(tmp, "native.txt"));
+            byte[] nb = new byte[16];
+            int nn = nin.read(nb);
+            nin.close();
+            need = Integer.parseInt(new String(nb, 0, Math.max(0, nn), "UTF-8").trim());
+        } catch (Exception e) { }
+        if (need > NATIVE || !new File(tmp, "index.html").isFile()) {
+            rmrf(tmp);
+            return new JSONObject().put("ok", false).put("need", need).put("error", need > NATIVE ? "apk" : "paket");
+        }
+        rmrf(dir);
+        if (!tmp.renameTo(dir)) throw new Exception("paket yazılamadı");
+        sp().edit().putString("pend", tag).commit();
+        cleanWeb();
+        return new JSONObject().put("ok", true).put("tag", tag);
+    }
+
+    // indirilen paketi hemen kullanmaya başla (oyun sayfası ardından kendini yeniler)
+    private synchronized JSONObject webApply(String tag) throws Exception {
+        if (!tag.equals(sp().getString("pend", null)) || !webDir(tag).isDirectory()) return new JSONObject().put("ok", false);
+        sp().edit().putString("web", tag).putBoolean("trial", true).remove("pend").commit();
+        webTag = tag;
+        webRoot = webDir(tag);
+        cleanWeb();
+        return new JSONObject().put("ok", true);
+    }
 
     void push(JSONObject e) { events.offer(e); }
 
@@ -198,8 +339,13 @@ final class LocalServer {
         if (path.endsWith("/")) path += "index.html";
         if (path.contains("..")) { send(out, 403, "text/plain", new byte[0], head); return; }
         AssetManager am = app.getAssets();
-        InputStream in;
-        try { in = am.open("www" + path); } catch (Exception e) {
+        InputStream in = null;
+        File wr = webRoot;
+        if (wr != null) {
+            File f = new File(wr, path);
+            if (f.isFile() && f.getCanonicalPath().startsWith(wr.getCanonicalPath() + File.separator)) in = new FileInputStream(f);
+        }
+        if (in == null) try { in = am.open("www" + path); } catch (Exception e) {
             send(out, 404, "text/plain; charset=utf-8", "yok".getBytes("UTF-8"), head);
             return;
         }
@@ -234,7 +380,14 @@ final class LocalServer {
                 try { ver = app.getPackageManager().getPackageInfo(app.getPackageName(), 0).versionName; } catch (Exception e) { }
                 return new JSONObject().put("abi", Build.SUPPORTED_ABIS.length > 0 ? Build.SUPPORTED_ABIS[0] : "")
                         .put("sdk", Build.VERSION.SDK_INT).put("android", Build.VERSION.RELEASE)
-                        .put("model", Build.MANUFACTURER + " " + Build.MODEL).put("app", ver);
+                        .put("model", Build.MANUFACTURER + " " + Build.MODEL).put("app", ver)
+                        .put("bits", android.os.Process.is64Bit() ? 64 : 32).put("native", NATIVE).put("web", webTag == null ? "" : webTag);
+            }
+            case "webUpdate": return webUpdate(a.optString("url", ""), a.optString("tag", ""), a.optString("sha", ""));
+            case "webApply": return webApply(a.optString("tag", ""));
+            case "booted": {
+                if (webTag != null && sp().getBoolean("trial", false)) sp().edit().putBoolean("trial", false).remove("bad").commit();
+                return ok;
             }
             case "open": {
                 final String u = a.optString("url", "");
@@ -309,6 +462,12 @@ final class LocalServer {
     @SuppressWarnings("deprecation")
     private JSONObject download(String u, final String title) throws Exception {
         if (!u.startsWith("https://")) throw new Exception("adres");
+        long got = fetch(u, apkFile(), title);
+        return new JSONObject().put("ok", true).put("size", got);
+    }
+
+    @SuppressWarnings("deprecation")
+    private long fetch(String u, File f, final String title) throws Exception {
         if (title != null) ui(new Ui() { public void run(MainActivity x) {
             if (pd != null) pd.dismiss();
             pd = new ProgressDialog(x, android.R.style.Theme_DeviceDefault_Dialog_Alert);
@@ -321,8 +480,7 @@ final class LocalServer {
         } });
         HttpURLConnection c = null;
         try {
-            File f = apkFile();
-            File tmp = new File(f.getParentFile(), "dl.tmp");
+            File tmp = new File(f.getParentFile(), f.getName() + ".dl");
             String cur = u;
             int code = 0;
             for (int hop = 0; hop < 6; hop++) {
@@ -367,10 +525,10 @@ final class LocalServer {
             if (total > 0 && got != total) throw new Exception("eksik indirme");
             if (f.exists()) f.delete();
             if (!tmp.renameTo(f)) throw new Exception("dosya yazılamadı");
-            return new JSONObject().put("ok", true).put("size", got);
+            return got;
         } finally {
             if (c != null) c.disconnect();
-            ui(new Ui() { public void run(MainActivity x) { try { if (pd != null) pd.dismiss(); } catch (Exception e) { } pd = null; } });
+            if (title != null) ui(new Ui() { public void run(MainActivity x) { try { if (pd != null) pd.dismiss(); } catch (Exception e) { } pd = null; } });
         }
     }
 }

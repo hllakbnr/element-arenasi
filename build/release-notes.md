@@ -1,3 +1,4 @@
-- Android: oyun artık uygulamanın içine gömülü Firefox motoruyla çalışıyor. Telefonun kendi tarayıcı parçası (WebView) bozuk olsa bile oyun açılır; bazı Xiaomi telefonlardaki karanlık/şeritli ekran sorunu böyle çözüldü.
-- Android: 64-bit telefonlar için ElementArenasi.apk, eski 32-bit telefonlar için ElementArenasi-32.apk. Oyun içi güncelleme telefonuna uygun olanı kendisi seçer.
-- Bu geçişte telefondaki oyun ayarları sıfırlanır; hesabınla bir kez yeniden giriş yapman gerekebilir.
+- Telefonda büyük performans güncellemesi: yüklediğin karakter modelleri grafik ayarına göre otomatik sadeleşiyor (görünüm aynı, yük çok daha az), dokular küçültülüyor, gölge ve çözünürlük telefona göre ayarlanıyor. Oyun kasarsa kaliteyi kendisi biraz düşürüyor.
+- Android: güncellemeler artık kurulum gerektirmeden oyunun içinden iniyor. Ana menüdeyken yeni sürüm gelince oyun kendini birkaç saniyede yeniliyor. APK'yı yeniden kurmak sadece nadiren gerekecek.
+- Android: güncelleme telefonuna uygun dosyayı (32/64-bit) kendisi seçiyor.
+- PC: kalabalık sahnelerde karakterler daha az yük bindiriyor.

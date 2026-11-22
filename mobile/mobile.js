@@ -8,7 +8,7 @@
   alert:function(a){return N('alert',a)},confirm:function(a){return N('confirm',a)},toast:function(a){return N('toast',a)}};
  var INFO={abi:''};N('info').then(function(i){INFO=i||INFO}).catch(function(){});
  var VER='__EA_VERSION__',REPO='hllakbnr/element-arenasi',cbs=[],pend=null;
- function apkName(){return /^armeabi/.test(INFO.abi||'')?'ElementArenasi-32.apk':'ElementArenasi.apk'}
+ function apkName(){var b=INFO.bits||(/^armeabi/.test(INFO.abi||'')?32:64);return b===32?'ElementArenasi-32.apk':'ElementArenasi.apk'}
  function APK(){return 'https://github.com/'+REPO+'/releases/latest/download/'+apkName()}
  document.documentElement.classList.add('ea-mobile');
  var SAFE=0;window.__eaSafe=0;
@@ -62,9 +62,18 @@
    if(!ok){U.run=false;return}
    if(!Upd||!Upd.download){U.run=false;return fallback(T('Bu cihazda otomatik güncelleme yapılamıyor.','Automatic update is not available on this device.'))}
    return Upd.download({url:APK(),title:T('Güncelleme indiriliyor','Downloading update')}).then(function(){U.ready=true;return install()},function(e){return fallback(T('İndirme başarısız oldu','The download failed')+(e&&e.message?' ('+e.message+')':'')+'.')}).then(function(){U.run=false})})}
- function check(){return fetch('https://api.github.com/repos/'+REPO+'/releases/latest',{headers:{Accept:'application/vnd.github+json'}}).then(function(r){return r.ok?r.json():null}).then(function(j){
-  if(!j||!j.tag_name||!newer(j.tag_name,VER))return;if(!(j.assets||[]).some(function(a){return a&&a.name===apkName()}))return;return update(j.tag_name)}).catch(function(){})}
-
- setTimeout(check,8000);
+ /* güncelleme: önce oyun paketi (küçük, kurulum gerekmez); Android tarafı değiştiyse APK */
+ var W={tag:'',busy:false,ready:''};
+ function idle(){try{return (0,eval)("typeof state!=='undefined'&&state==='menu'&&!(typeof MP!=='undefined'&&MP.room)")}catch(e){return false}}
+ function applyWeb(tag){W.ready=tag;try{if(sessionStorage.getItem('ea-applied')===tag)return;sessionStorage.setItem('ea-applied',tag)}catch(e){}(function wait(){if(!idle()){setTimeout(wait,2000);return}
+  N('webApply',{tag:tag}).then(function(r){if(!r||!r.ok)return;toast(T('Oyun güncellendi: ','Game updated: ')+tag);setTimeout(function(){location.reload()},500)}).catch(function(){})})()}
+ function webUpd(j,tag){var a=(j.assets||[]).filter(function(x){return x&&x.name==='ElementArenasi-web.zip'})[0];if(!a)return Promise.reject(new Error('paket yok'));
+  return N('webUpdate',{url:a.browser_download_url,tag:tag,sha:String(a.digest||'').replace(/^sha256:/,'')}).then(function(r){if(r&&r.ok){applyWeb(tag);return}if(r&&r.error==='apk')throw new Error('apk');if(r&&(r.error==='eski'||r.error==='bozuk'))return;throw new Error(r&&r.error||'paket')})}
+ function check(){if(W.busy||W.ready||U.run)return Promise.resolve();W.busy=true;return fetch('https://api.github.com/repos/'+REPO+'/releases/latest',{headers:{Accept:'application/vnd.github+json'}}).then(function(r){return r.ok?r.json():null}).then(function(j){
+  if(!j||!j.tag_name||!newer(j.tag_name,VER))return;var tag=j.tag_name,hasApk=(j.assets||[]).some(function(a){return a&&a.name===apkName()});
+  return webUpd(j,tag).catch(function(e){if(hasApk)return update(tag)})}).catch(function(){}).then(function(){W.busy=false})}
+ setTimeout(check,6000);
+ /* yeni oyun paketi düzgün açıldıysa Android tarafına bildir (açılmazsa bir sonraki açılışta eski sürüme dönülür) */
+ (function bt(){if(window.__eaBooted){N('booted',{v:VER}).catch(function(){});return}setTimeout(bt,700)})();
  function onResume(){if(U.ready&&(U.state==='perm'||U.state==='installing'))install();else if(!U.run)setTimeout(check,2000)}
 })();
