@@ -1630,14 +1630,14 @@ async function sigChannel(code){const ch=PLAT.client.channel('ea-sig-'+code,{con
 const LANH={cur:null};
 if(window.eaDesk&&eaDesk.lan)eaDesk.lan.onOffer(async o=>{const h=LANH.cur;if(!h||!o||!okKey(o.k)||typeof o.sdp!=='string'){eaDesk.lan.answer(o&&o.id,'');return}try{eaDesk.lan.answer(o.id,await h(o.k,o.sdp))}catch(e){eaDesk.lan.answer(o.id,'')}});
 /* oda kur: bu bilgisayar merkez olur */
-async function netHost(code,lan,info){const key=rkey(),R=hubRoom(key,true),pend=new Set();
+async function netHost(code,lan,info){const key=rkey(),R=hubRoom(key,true),pend=new Set(),fbp=new Set();
  const accept=async(k,sdp)=>{if(pend.has(k)||R.has(k))return null;pend.add(k);setTimeout(()=>pend.delete(k),15000);const pc=new RTCPeerConnection({iceServers:lan?[]:ICE});
   pc.ondatachannel=e=>{const dc=e.channel;const on=()=>{pend.delete(k);R.addLink(k,dcLink(pc,dc))};if(dc.readyState==='open')on();else dc.onopen=on};
   await pc.setRemoteDescription({type:'offer',sdp});await pc.setLocalDescription(await pc.createAnswer());await iceDone(pc,lan?700:2500);setTimeout(()=>{if(!R.has(k))try{pc.close()}catch(e){}},20000);return pc.localDescription.sdp};
  if(lan){LANH.cur=accept;await eaDesk.lan.host(info);R.onLeave(()=>{if(LANH.cur===accept)LANH.cur=null;eaDesk.lan.stop()})}
  else{const ch=await sigChannel(code);ch.on('broadcast',{event:'s'},async m=>{const p=m&&m.payload||{};if(!okKey(p.k))return;
    if(p.t==='offer'&&typeof p.sdp==='string'&&p.sdp.length<20000){try{const a=await accept(p.k,p.sdp);if(a)ch.send({type:'broadcast',event:'s',payload:{t:'answer',to:p.k,sdp:a}}).catch(()=>{})}catch(e){console.warn('rtc',e)}}
-   else if(p.t==='fb'&&!R.has(p.k)){try{R.addLink(p.k,await sbLink('ea-fb-'+code+'-'+p.k,key))}catch(e){}}});
+   else if(p.t==='fb'&&!R.has(p.k)&&!fbp.has(p.k)){fbp.add(p.k);try{R.addLink(p.k,await sbLink('ea-fb-'+code+'-'+p.k,key))}catch(e){}fbp.delete(p.k)}});
   R.onLeave(()=>PLAT.client.removeChannel(ch))}
  return R}
 /* odaya katıl: önce doğrudan bağlantı, olmazsa yedek kanal */
@@ -1651,15 +1651,25 @@ async function netClient(code,lanAddr){const key=rkey(),R=hubRoom(key,false),pc=
  for(let i=0;i<3&&!ans;i++){ch.send({type:'broadcast',event:'s',payload:{t:'offer',k:key,sdp:offer}}).catch(()=>{});await Promise.race([got,nsleep(3000)])}
  if(!ans){PLAT.client.removeChannel(ch);try{pc.close()}catch(e){}throw new Error('noroom')}
  if(await waitOpen(7000))R.addLink('host',dcLink(pc,dc));
- else{try{pc.close()}catch(e){}const l=await sbLink('ea-fb-'+code+'-'+key,key);ch.send({type:'broadcast',event:'s',payload:{t:'fb',k:key}}).catch(()=>{});R.addLink('host',l);R.fb=true}
+ else{try{pc.close()}catch(e){}const l=await sbLink('ea-fb-'+code+'-'+key,key);R.addLink('host',l);R.fb=true;let heard=false;const f0=l.onmsg;l.onmsg=o=>{heard=true;f0&&f0(o)};
+  for(let i=0;i<10&&!heard;i++){try{await ch.send({type:'broadcast',event:'s',payload:{t:'fb',k:key}})}catch(e){}for(let j=0;j<6&&!heard;j++)await nsleep(250)}
+  if(!heard){PLAT.client.removeChannel(ch);await R.leave();l.close();throw new Error('fb')}}
  PLAT.client.removeChannel(ch);return R}
 /* oda listesi: sadece oda kuranlar kendini duyurur (her oyuncu saniyede mesaj atmaz) */
-function sbLobby(){const myKey=rkey(),ch=PLAT.client.channel('ea-lobby2',{config:{presence:{key:myKey}}}),cbs=new Set();let st={},ok=false,me=null;
- ch.on('presence',{event:'sync'},()=>{st=ch.presenceState()||{};cbs.forEach(f=>{try{f()}catch(e){}})});
- ch.subscribe(async s=>{if(s==='SUBSCRIBED'){ok=true;if(me&&me.h)try{await ch.track(me)}catch(e){}}});
- return{presence(p){me=Object.assign({},me,p||{});if(!ok)return Promise.resolve();return (me.h?ch.track(me):ch.untrack()).catch(()=>{})},
+function sbLobby(){const myKey=rkey(),ch=PLAT.client.channel('ea-lobby2',{config:{presence:{key:myKey},broadcast:{self:false}}}),cbs=new Set(),bc=new Map();let st={},ok=false,me=null;
+ const fire=()=>cbs.forEach(f=>{try{f()}catch(e){}});
+ const ping=()=>{if(ok)Promise.resolve(ch.send({type:'broadcast',event:'h',payload:{k:myKey,h:me&&me.h||null}})).catch(()=>{})};
+ const tr=()=>Promise.resolve(ch.track(me&&me.h?me:{l:1})).catch(()=>{});
+ ch.on('presence',{event:'sync'},()=>{st=ch.presenceState()||{};fire()});
+ ch.on('broadcast',{event:'h'},m=>{const p=m&&m.payload;if(!p||!okKey(p.k)||p.k===myKey)return;if(p.h&&typeof p.h==='object'&&typeof p.h.c==='string')bc.set(p.k,{h:p.h,t:Date.now()});else bc.delete(p.k);fire()});
+ ch.on('broadcast',{event:'q'},()=>{if(me&&me.h)ping()});
+ ch.subscribe(async s=>{if(s==='SUBSCRIBED'){ok=true;await tr();if(me&&me.h)ping();else Promise.resolve(ch.send({type:'broadcast',event:'q',payload:{}})).catch(()=>{})}});
+ setInterval(()=>{if(ok&&me&&me.h)ping();const now=Date.now();let c=false;bc.forEach((v,k)=>{if(now-v.t>13000){bc.delete(k);c=true}});if(c)fire()},4000);
+ return{presence(p){const was=!!(me&&me.h);me=Object.assign({},me,p||{});if(!ok)return Promise.resolve();if(was||me.h)ping();return tr()},
+  ask(){if(ok)Promise.resolve(ch.send({type:'broadcast',event:'q',payload:{}})).catch(()=>{})},
   onPeers(f){cbs.add(f);return()=>cbs.delete(f)},
-  peers(){const out=[];for(const k in st){const a=st[k],p=Array.isArray(a)?a[a.length-1]:null;if(p)out.push({peer:k,presence:p,isMe:k===myKey})}return out}}}
+  peers(){const out=[],seen=new Set();for(const k in st){const a=st[k],p=Array.isArray(a)?a[a.length-1]:null;if(p&&p.h){out.push({peer:k,presence:p,isMe:k===myKey});seen.add(k)}}
+   bc.forEach((v,k)=>{if(!seen.has(k))out.push({peer:k,presence:{h:v.h},isMe:false})});return out}}}
 /* yerel ağdaki odalar (masaüstü uygulaması) */
 const LANR={list:[],on:false};
 if(window.eaDesk&&eaDesk.lan)eaDesk.lan.onRooms(l=>{LANR.list=Array.isArray(l)?l.filter(r=>r&&typeof r.ip==='string'&&/^[\d.]+$/.test(r.ip)&&(r.port|0)>0&&typeof r.c==='string'&&r.c!==MP.code):[];if(state==='modes'&&!$('joinCfg').hidden)renderRoomList()});
@@ -2293,7 +2303,7 @@ function openModes(){closePanels();hideAll();$('menu').hidden=true;document.body
  const na=!ROOM;$('moHost').disabled=na;$('moJoin').disabled=na;$('mpNA').hidden=!na;$('mpNA').textContent=tt(PLAT.sb?(PLAT.user?'mpConn':'mpLogin'):'mpNA');$('mpLoginB').hidden=!(na&&PLAT.sb&&!PLAT.user);modeSub(null);try{$('moSolo').focus({preventScroll:true})}catch(e){}}
 let hostCfg={mode:'1v1',cap:2,vis:'pub',net:'net'};
 function renderHostCfg(){const lanOk=!!(window.eaDesk&&eaDesk.lan);if(!lanOk)hostCfg.net='net';$('hNetRow').hidden=!lanOk;segOn('hNet',hostCfg.net);$('hLanN').hidden=hostCfg.net!=='lan';$('hVisRow').hidden=hostCfg.net==='lan';segOn('hMode',hostCfg.mode);segOn('hCap',hostCfg.cap);segOn('hVis',hostCfg.vis);arCards('hAr');$('capRow').hidden=hostCfg.mode!=='coop';$('hCap').querySelectorAll('button').forEach(b=>b.disabled=false)}
-let MODESUB=null;function modeSub(id){['moSolo','moHost','moJoin','moLocal'].forEach(b=>$(b).hidden=!!id);$('hostCfg').hidden=id!=='hostCfg';$('joinCfg').hidden=id!=='joinCfg';$('arCfg').hidden=id!=='arCfg';$('mpNA').hidden=!!id||!!ROOM;$('mpLoginB').hidden=!!id||!!ROOM||!PLAT.sb||!!PLAT.user;MODESUB=id;lanScan(id==='joinCfg')}
+let MODESUB=null;function modeSub(id){['moSolo','moHost','moJoin','moLocal'].forEach(b=>$(b).hidden=!!id);$('hostCfg').hidden=id!=='hostCfg';$('joinCfg').hidden=id!=='joinCfg';$('arCfg').hidden=id!=='arCfg';$('mpNA').hidden=!!id||!!ROOM;$('mpLoginB').hidden=!!id||!!ROOM||!PLAT.sb||!!PLAT.user;MODESUB=id;lanScan(id==='joinCfg');if(id==='joinCfg'&&ROOM&&ROOM.ask)ROOM.ask()}
 $('mpLoginB').onclick=()=>{showAuth(true)};
 $('moSolo').onclick=()=>{modeSub('arCfg');arCards('arGrid');try{$('arGo').focus({preventScroll:true})}catch(e){}};
 $('arGo').onclick=async()=>{const b=$('arGo');if(b.disabled)return;b.disabled=true;await encPrep(ARSEL,(n,t)=>{b.textContent=tt('encLoad').replace('{n}',n).replace('{t}',t)});b.disabled=false;b.textContent=tt('startB');useArena(ARSEL);$('modes').hidden=true;LOC.last=false;start(sel)};

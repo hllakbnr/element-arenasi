@@ -1,4 +1,2 @@
-- Yeni bağlantı sistemi: oda kuran kişi artık merkez. Oyuncular birbirine doğrudan bağlanıyor, daha az gecikme. Doğrudan bağlantı kurulamazsa oyun kendiliğinden yedek yola geçiyor.
-- LAN: Oda Kur > Bağlantı > LAN seçersen aynı Wi-Fi/ağdaki arkadaşların odayı Odaya Katıl listesinde LAN etiketiyle görür.
-- Düşman ayarı yenilendi: her modelin altında Kullan / Kaldır var. Kullan'a basınca arenalar ve düşmanları açılıyor, modelin kimin yerine geçeceğini oradan seçiyorsun.
-- Yenilikler ekranı artık güncelleme sırasında değil, güncellemeden sonra oyuna ilk girişte çıkıyor.
+- Çok oyunculu düzeltmesi: doğrudan bağlanamayan oyuncular (bazı modem/internet sağlayıcıları) artık yedek yoldan odaya düzgün giriyor; oda sahibi onları görüyor ve dövüş başlatılabiliyor.
+- Odaya Katıl listesi düzeltildi: herkese açık odalar yeniden görünüyor.
