@@ -4,6 +4,10 @@
 // İnternet yoksa denetim birkaç saniye sonra bırakılır ve oyun açılır.
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const dgram = require('dgram');
+const http = require('http');
+const os = require('os');
 let autoUpdater = null;
 try { autoUpdater = require('electron-updater').autoUpdater; } catch (e) {}
 
@@ -94,3 +98,60 @@ function runUpdate() {
 }
 
 ipcMain.handle('ea-open', (e, url) => { if (typeof url === 'string' && /^https:\/\//.test(url)) return shell.openExternal(url); });
+
+// Güncelleme notları: oyun, güncellemeden sonraki ilk açılışta gösterir.
+ipcMain.handle('ea-notes', () => { try { return fs.readFileSync(path.join(__dirname, 'build', 'release-notes.md'), 'utf8').slice(0, 4000); } catch (e) { return ''; } });
+
+// ---- Yerel ağ (LAN) odaları: sunucu yok. Oda kuran bilgisayar odasını yerel ağa duyurur,
+// katılanlar küçük bir el sıkışma isteğiyle doğrudan bağlanır (oyun verisi WebRTC ile gider).
+const LAN = { port: 47821, udp: null, srv: null, info: null, bt: null, scan: null, st: null, rooms: new Map(), pend: new Map(), seq: 0, hport: 0 };
+function lanSend(ch, data) { if (win && !win.isDestroyed()) win.webContents.send(ch, data); }
+function bcastAddrs() {
+  const out = new Set(['255.255.255.255']);
+  for (const l of Object.values(os.networkInterfaces())) for (const a of l || []) {
+    if (a.family !== 'IPv4' && a.family !== 4) continue; if (a.internal || !a.netmask) continue;
+    const ip = a.address.split('.').map(Number), mk = a.netmask.split('.').map(Number);
+    out.add(ip.map((v, i) => (v & mk[i]) | (~mk[i] & 255)).join('.'));
+  }
+  return [...out];
+}
+function lanStop() {
+  clearInterval(LAN.bt); LAN.bt = null; LAN.info = null;
+  try { LAN.srv && LAN.srv.close(); } catch (e) {} try { LAN.udp && LAN.udp.close(); } catch (e) {}
+  LAN.srv = null; LAN.udp = null; LAN.pend.forEach(f => f('')); LAN.pend.clear();
+}
+ipcMain.handle('lan-host', async (e, info) => {
+  lanStop(); LAN.info = Object.assign({}, info);
+  LAN.srv = http.createServer((req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    if (req.method === 'OPTIONS') { res.end(); return; }
+    if (req.method !== 'POST' || req.url !== '/sdp' || LAN.pend.size > 8) { res.statusCode = 404; res.end(); return; }
+    let b = ''; req.on('data', d => { b += d; if (b.length > 65536) req.destroy(); });
+    req.on('end', () => {
+      let j; try { j = JSON.parse(b); } catch (x) { res.statusCode = 400; res.end(); return; }
+      const id = ++LAN.seq; const t = setTimeout(() => { if (LAN.pend.has(id)) { LAN.pend.delete(id); res.statusCode = 504; res.end('{}'); } }, 10000);
+      LAN.pend.set(id, sdp => { clearTimeout(t); res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ sdp: String(sdp || '') })); });
+      lanSend('lan-offer', { id, k: String(j.k || '').slice(0, 40), sdp: String(j.sdp || '').slice(0, 20000) });
+    });
+  });
+  await new Promise((res, rej) => { LAN.srv.once('error', rej); LAN.srv.listen(0, '0.0.0.0', res); });
+  LAN.hport = LAN.srv.address().port;
+  LAN.udp = dgram.createSocket({ type: 'udp4', reuseAddr: true }); LAN.udp.on('error', () => {});
+  await new Promise(r => LAN.udp.bind(() => { try { LAN.udp.setBroadcast(true); } catch (x) {} r(); }));
+  const beat = () => { if (!LAN.info || !LAN.udp) return; const msg = Buffer.from(JSON.stringify(Object.assign({ ea: 1 }, LAN.info, { port: LAN.hport })));
+    bcastAddrs().forEach(a => { try { LAN.udp.send(msg, LAN.port, a, () => {}); } catch (x) {} }); };
+  beat(); LAN.bt = setInterval(beat, 1000); return { port: LAN.hport };
+});
+ipcMain.handle('lan-update', (e, info) => { if (LAN.info) LAN.info = Object.assign({}, LAN.info, info); });
+ipcMain.handle('lan-answer', (e, id, sdp) => { const f = LAN.pend.get(id); if (f) { LAN.pend.delete(id); f(sdp); } });
+ipcMain.handle('lan-stop', () => lanStop());
+ipcMain.handle('lan-scan', (e, on) => {
+  if (on && !LAN.scan) {
+    const s = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+    s.on('message', (b, ri) => { try { const j = JSON.parse(b.toString()); if (j.ea !== 1) return;
+      LAN.rooms.set(ri.address + ':' + j.port, { ip: ri.address, port: j.port | 0, c: String(j.c || '').slice(0, 8), hn: String(j.hn || '').slice(0, 20), m: String(j.m || '').slice(0, 6), n: j.n | 0, cap: j.cap | 0, t: Date.now() }); } catch (x) {} });
+    s.on('error', () => {}); s.bind(LAN.port); LAN.scan = s;
+    LAN.st = setInterval(() => { const now = Date.now(); for (const [k, v] of LAN.rooms) if (now - v.t > 3500) LAN.rooms.delete(k); lanSend('lan-rooms', [...LAN.rooms.values()]); }, 1000);
+  } else if (!on && LAN.scan) { clearInterval(LAN.st); try { LAN.scan.close(); } catch (x) {} LAN.scan = null; LAN.rooms.clear(); }
+});
+app.on('before-quit', () => lanStop());

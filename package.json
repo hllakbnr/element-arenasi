@@ -19,10 +19,40 @@
     "appId": "com.elementarenasi.oyun",
     "productName": "Element Arenası",
     "artifactName": "ElementArenasi-Kurulum.${ext}",
-    "files": ["main.js", "preload.js", "update.html", "app-config.json", "game/**"],
-    "protocols": [{ "name": "Element Arenasi", "schemes": ["elementarenasi"] }],
-    "win": { "target": "nsis", "icon": "build/icon.png" },
-    "nsis": { "oneClick": true, "perMachine": false, "createDesktopShortcut": "always", "createStartMenuShortcut": true, "shortcutName": "Element Arenası" },
-    "publish": [{ "provider": "github", "owner": "hllakbnr", "repo": "element-arenasi", "releaseType": "release" }]
+    "files": [
+      "main.js",
+      "preload.js",
+      "update.html",
+      "app-config.json",
+      "game/**",
+      "build/release-notes.md"
+    ],
+    "protocols": [
+      {
+        "name": "Element Arenasi",
+        "schemes": [
+          "elementarenasi"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Element Arenası"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "hllakbnr",
+        "repo": "element-arenasi",
+        "releaseType": "release"
+      }
+    ]
   }
 }

@@ -1,3 +1,4 @@
-- Çok oyunculuda E yetenekleri (ateş topu, yıldırım, deprem, buz) artık herkesin ekranında görünüyor.
-- Yıldırım kasırgası lacivert ağırlıklı, altın sarısı çizgili.
-- Düşman can çubukları: ince siyah çerçeve, içi kan kırmızısı; artık net görünüyor.
+- Yeni bağlantı sistemi: oda kuran kişi artık merkez. Oyuncular birbirine doğrudan bağlanıyor, daha az gecikme. Doğrudan bağlantı kurulamazsa oyun kendiliğinden yedek yola geçiyor.
+- LAN: Oda Kur > Bağlantı > LAN seçersen aynı Wi-Fi/ağdaki arkadaşların odayı Odaya Katıl listesinde LAN etiketiyle görür.
+- Düşman ayarı yenilendi: her modelin altında Kullan / Kaldır var. Kullan'a basınca arenalar ve düşmanları açılıyor, modelin kimin yerine geçeceğini oradan seçiyorsun.
+- Yenilikler ekranı artık güncelleme sırasında değil, güncellemeden sonra oyuna ilk girişte çıkıyor.

@@ -52,7 +52,6 @@ const $=id=>document.getElementById(id),mb=b=>(b/1048576).toFixed(1)+' MB';
 function show(o){o=o||{st:'check'};const st=o.st;
  $('t').textContent=T[st==='prog'?'found':st]||T.check;$('s').textContent=T[(st==='prog'?'found':st)+'S']||T.checkS;
  if(o.v){$('v').textContent=T.ver+o.v;$('v').hidden=false}
- if(o.notes!=null&&o.notes.trim()){$('nt').textContent=T.notes;$('nb').textContent=o.notes.trim();$('notes').hidden=false}
  $('lock').textContent=T.lock;$('lock').hidden=st==='check';
  const bar=$('bar');$('retry').hidden=st!=='err';$('retry').textContent=T.retry;
  if(st==='prog'){bar.classList.remove('ind');const p=Math.max(0,Math.min(100,o.pct||0));$('fill').style.width=p.toFixed(1)+'%';$('p1').textContent=Math.round(p)+'%';$('p2').textContent=o.total?mb(o.done||0)+' / '+mb(o.total)+(o.bps?'  ·  '+mb(o.bps)+'/s':''):''}
