@@ -56,11 +56,15 @@ jobs:
           KS: ${{ secrets.ANDROID_KEYSTORE }}
           KSP: ${{ secrets.ANDROID_KEYSTORE_PASS }}
         run: |
-          if [ -n "$KS" ] && [ -n "$KSP" ]; then
+          if [ -n "$KSP" ] && [ -n "$KS" ]; then
             echo "$KS" | base64 -d > mobile/android/app/ea.jks
             echo "EA_KS_PASS=$KSP" >> "$GITHUB_ENV"
+          elif [ -n "$KSP" ] && openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in mobile/ea-release.jks.enc -out mobile/android/app/ea.jks -pass "pass:$KSP"; then
+            echo "Kalıcı imza anahtarı kullanılıyor."
+            echo "EA_KS_PASS=$KSP" >> "$GITHUB_ENV"
           else
-            echo "::warning::ANDROID_KEYSTORE ayarı yok; geçici imza kullanılıyor (güncellemede uygulamayı silip yeniden kurmak gerekir)."
+            echo "::warning::ANDROID_KEYSTORE_PASS ayarı yok; geçici imza kullanılıyor (güncellemede uygulamayı silip yeniden kurmak gerekir)."
+            rm -f mobile/android/app/ea.jks
             keytool -genkeypair -keystore mobile/android/app/ea.jks -alias ea -keyalg RSA -keysize 2048 -validity 10000 -storepass geciciImza123 -keypass geciciImza123 -dname "CN=Element Arenasi"
             echo "EA_KS_PASS=geciciImza123" >> "$GITHUB_ENV"
           fi

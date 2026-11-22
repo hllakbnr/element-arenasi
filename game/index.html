@@ -95,6 +95,10 @@ button.b:focus-visible{outline:2px solid #fff;outline-offset:2px}
 #pause .col{display:flex;flex-direction:column;gap:10px;min-width:240px}
 canvas{transition:filter .6s,transform .6s}
 body.menu canvas{filter:blur(5px) brightness(.6) saturate(1.1);transform:scale(1.04)}
+/* Android uygulaması: bazı telefonlarda 3D tuval üstündeki bulanıklık ve buzlu cam efektleri ekranı karartıyor; onların yerine düz koyu perde */
+html.ea-mobile body.menu canvas{filter:none!important;transform:none!important;opacity:.45}
+html.ea-mobile *,html.ea-mobile *::before,html.ea-mobile *::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;will-change:auto!important}
+html.ea-mobile body{background:#0b0a12}
 #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%)}
 #menu{position:fixed;inset:0;pointer-events:none}
 #menu .title{position:absolute;left:calc(min(330px,80vw) + (100vw - min(330px,80vw)) / 2);top:38%;transform:translate(-50%,-50%);text-align:center;transition:opacity .3s;width:min(820px,calc(100vw - min(330px,80vw) - 48px))}

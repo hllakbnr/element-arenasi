@@ -1,5 +1,3 @@
-- Telefonda açılışta donma düzeltildi: oyunun ihtiyaç duyduğu kütüphaneler ve yazı tipleri artık uygulamanın içinde, açılırken internetten bir şey beklemiyor. Yine de açılamazsa sebebini gösteren bir ekran ve Tekrar dene düğmesi çıkıyor.
-- Daha az tuş: Tut tuşu artık rakibi tutar, elin doluyken yürüyüp nişan alırsın, tekrar basınca fırlatır (klavyede F, tekrar F).
-- Telefonda Ağır tuşu kalktı: Vur'a dokun = hafif saldırı, basılı tut = ağır saldırı.
-- Kasırga tuşu sadece enerji dolunca parlayarak çıkıyor. Klavyede Kasırga artık Q tuşu.
-- Zayıf telefonlarda ilk açılışta grafik kalitesi kendiliğinden düşük başlıyor (ayarlardan değiştirilebilir).
+- Telefonda ekranın kararıp kalması düzeltildi: bazı telefonlarda ekranı karartan bulanıklık efektleri telefon uygulamasında kapatıldı.
+- Telefona oyun içi güncelleme geldi: yeni sürüm çıkınca oyun açılışta güncellemeyi kendisi indirir ve Android'in kurulum ekranını açar. Sadece "Güncelle"ye basman yeterli.
+- Güncellemelerin eski sürümün üstüne kurulabilmesi için uygulama artık her sürümde aynı kalıcı imzayla imzalanıyor.

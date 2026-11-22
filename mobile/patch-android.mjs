@@ -8,6 +8,7 @@ let m=fs.readFileSync(A+'AndroidManifest.xml','utf8');
 if(!m.includes('screenOrientation'))m=m.replace(/<activity\b/,'<activity\n            android:screenOrientation="sensorLandscape"\n            android:resizeableActivity="false"');
 if(!m.includes('android:scheme="elementarenasi"'))m=m.replace(/(<\/intent-filter>)/,'$1\n            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="elementarenasi" />\n            </intent-filter>');
 if(!/android:launchMode="singleTask"/.test(m))m=m.replace(/<activity\b/,'<activity\n            android:launchMode="singleTask"');
+if(!m.includes('REQUEST_INSTALL_PACKAGES'))m=m.replace('</manifest>','    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n</manifest>');
 fs.writeFileSync(A+'AndroidManifest.xml',m);
 // 2) MainActivity: tam ekran + ekran açık kalsın
 const pkgDir=A+'java/com/elementarenasi/oyun/';fs.mkdirSync(pkgDir,{recursive:true});
@@ -24,6 +25,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(EaUpdatePlugin.class);
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -46,6 +48,10 @@ public class MainActivity extends BridgeActivity {
     }
 }
 `);
+// oyun içi güncelleme eklentisi + indirilen APK için dosya paylaşım yolu
+fs.copyFileSync('EaUpdatePlugin.java',pkgDir+'EaUpdatePlugin.java');
+fs.mkdirSync(A+'res/xml',{recursive:true});fs.writeFileSync(A+'res/xml/file_paths.xml','<?xml version="1.0" encoding="utf-8"?>\n<paths xmlns:android="http://schemas.android.com/apk/res/android">\n    <external-path name="my_images" path="." />\n    <cache-path name="my_cache_images" path="." />\n</paths>\n');
+if(!m.includes('androidx.core.content.FileProvider')){m=m.replace('</application>','    <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">\n            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />\n        </provider>\n    </application>');fs.writeFileSync(A+'AndroidManifest.xml',m)}
 // 3) İkonlar
 const R=A+'res/';for(const d of fs.readdirSync('res')){fs.mkdirSync(R+d,{recursive:true});for(const f of fs.readdirSync('res/'+d))fs.copyFileSync(path.join('res',d,f),path.join(R,d,f))}
 fs.mkdirSync(R+'values',{recursive:true});fs.writeFileSync(R+'values/ic_launcher_background.xml','<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0E1020</color>\n</resources>\n');
