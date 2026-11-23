@@ -1,0 +1,19 @@
+name: Discord deneme
+# Elle çalıştırılır: son sürümün duyurusunu yalnızca ikinci Discord kanalına (DISCORD_WEBHOOK_2) gönderir.
+on: workflow_dispatch
+jobs:
+  deneme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Duyuruyu gönder
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCORD_WEBHOOK_2: ${{ secrets.DISCORD_WEBHOOK_2 }}
+          ONLY: '2'
+          APK_OK: 'true'
+        run: |
+          VER=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name) node tools/discord.mjs
