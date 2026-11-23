@@ -11,6 +11,11 @@ const os = require('os');
 let autoUpdater = null;
 try { autoUpdater = require('electron-updater').autoUpdater; } catch (e) {}
 
+// Bazı (çoğu eski) ekran kartları Chromium'un kara listesinde; o zaman oyun ekran kartı yerine işlemciyle çizilir ve çok kasar.
+// Listeyi yok say: ekran kartı gerçekten sorun çıkarırsa Chromium kendisi yine yazılımla çizmeye döner.
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+
 const PROTO = 'elementarenasi';
 let win = null, pendingAuth = null;
 

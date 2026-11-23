@@ -1,2 +1,6 @@
-- Çok oyunculu düzeltmesi: odaya katılırken bağlantı uzun sürünce tekrar dokunmak aynı oyuncuyu odaya birkaç kez sokuyordu. Oda sahibi bu "hayalet" kopyalara karşı dövüşüyor ve maç anında bitiyordu. Artık bağlanırken düğmeler kilitleniyor ve aynı cihazdan gelen fazla bağlantılar yok sayılıyor.
-- Bağlanırken ekranda "Bağlanıyor…" yazısı bağlantı kurulana kadar kalıyor.
+- Telefon arayüzü: menüdeki sekmeler (Silahlar, Kontroller, İstatistikler, Ayarlar) artık ekranın tamamını kullanıyor, sıkışıklık yok. Karakter ekranında karakterin kendisi ortada görünüyor, silah önizlemesi ekrana sığıyor, duraklat ve yenilgi ekranlarında klavye yerine dokunmatik yazıları çıkıyor.
+- Uyarı ve bilgi yazıları artık menü ekranlarının arkasında kalmıyor.
+- Telefonda başka uygulamaya geçince ya da bilgisayarda oyunu simge durumuna küçültünce tek kişilik maç duraklıyor ve ses kapanıyor.
+- Çok oyunculu (bilgisayar ve telefon birlikte): oda sahibinin cihazı yavaşlasa da geri sayımlar herkes için doğru sürüyor. Bağlantısı birkaç saniyeliğine kopan oyuncu hemen oyundan atılmıyor. Rakip tamamen çıkarsa sana bedava raund verilmiyor, maç "Rakip ayrıldı" diye bitiyor. Oyuncuların sürümleri farklıysa uyarı çıkıyor. Yerel ağ (LAN) odalarının yalnızca bilgisayarlar için olduğu yazıyor.
+- Yüklenen karakter modellerinin dokuları açılışta hazırlanıyor, maçın ilk anındaki takılma gitti.
+- Bilgisayar: bazı ekran kartlarında oyun ekran kartı yerine işlemciyle çiziliyordu (çok kasıyordu); artık ekran kartı kullanılıyor.
