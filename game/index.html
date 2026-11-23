@@ -1371,7 +1371,10 @@ async function modelRec(buf,name,flip,targets){const pr=await parseGLB(buf),base
  if(pr.skinned){const ins=instGLB(pr).root;ins.updateMatrixWorld(true);const bx=new T.Box3().setFromObject(ins),sz=new T.Vector3(),ct=new T.Vector3();bx.getSize(sz);bx.getCenter(ct);if(!(sz.y>0))throw new Error('empty');
   return Object.assign(base,{skinned:true,proto:pr,clips:pr.clips,norm:{s:2.45/sz.y,ox:-ct.x,oy:-bx.min.y,oz:-ct.z}})}
  const g=instGLB(pr).root;g.updateMatrixWorld(true);const flat=new T.Group();
- g.traverse(o=>{if(o.isMesh){const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);flat.add(new T.Mesh(geo,o.material))}});
+ g.traverse(o=>{if(o.isMesh){const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);const fm=new T.Mesh(geo,o.material);
+  /* parça adı: GLB'deki düğüm adı (ör. arm_R, leg_L) — adlandırılmış parçalı modeller doğrudan iskelete oturur */
+  for(let q=o.parent;q;q=q.parent){const mi=/^n(\d+)$/.exec(q.name||'');if(mi){const nd=(pr.j.nodes||[])[+mi[1]]||{};fm.name=(nd.name||'')+'|'+((nd.mesh!=null&&pr.j.meshes&&pr.j.meshes[nd.mesh]&&pr.j.meshes[nd.mesh].name)||'');if(nd.name)break}}
+  flat.add(fm)}});
  const box=new T.Box3().setFromObject(flat),sz=new T.Vector3(),ct=new T.Vector3();box.getSize(sz);box.getCenter(ct);if(!(sz.y>0))throw new Error('empty');
  const k=2.45/sz.y;flat.children.forEach(m=>{m.geometry.translate(-ct.x,-box.min.y,-ct.z);m.geometry.scale(k,k,k);m.geometry.computeBoundingSphere()});
  return Object.assign(base,{cal:calibModel(flat),tpl:flat})}
@@ -1407,6 +1410,21 @@ function skinnedRig(c,scale,look){const root=new T.Group();S.add(root);const bod
 /* ===== OTOMATİK İSKELET (statik modeller için) =====
    geoms:[{pos:Float32Array,idx:Uint32Array|Uint16Array|null}] model uzayında (boy 2.45, ayak y=0, yüz +z)
    Dönen: {ok, tl:[Uint8Array etiket/üçgen her geom için], piv:{...}, caps:[...], info} */
+/* ADLANDIRILMIŞ PARÇALAR: model kol/bacak/kalça parçalarını adıyla veriyorsa (arm_R, arm_L, leg_R, leg_L, hips; kol_sag, bacak_sol...) otomatik kesme yerine onlar kullanılır */
+const EA_PART=[[1,/(arm|kol)[^a-z]*(r|right|sag|sağ)([^a-z]|$)|(right|sag|sağ)[^a-z]*(arm|kol)/i],[2,/(arm|kol)[^a-z]*(l|left|sol)([^a-z]|$)|(left|sol)[^a-z]*(arm|kol)/i],
+ [3,/(leg|bacak)[^a-z]*(r|right|sag|sağ)([^a-z]|$)|(right|sag|sağ)[^a-z]*(leg|bacak)/i],[4,/(leg|bacak)[^a-z]*(l|left|sol)([^a-z]|$)|(left|sol)[^a-z]*(leg|bacak)/i],[5,/(^|[^a-z])(hips?|pelvis|kalca|kalça)([^a-z]|$)/i]];
+function namedSeg(ms,geoms){const H=2.45,labs=ms.map(m=>{const nm=String(m.name||'').split('|')[0]||String(m.name||'');for(const [L,re] of EA_PART)if(re.test(nm))return L;return 0});
+ if(!(labs.includes(1)&&labs.includes(2))&&!(labs.includes(3)&&labs.includes(4)))return null;
+ const V={};geoms.forEach((g,gi)=>{const L=labs[gi];(V[L]=V[L]||[]).push(g.pos)});
+ const each=(L,f)=>(V[L]||[]).forEach(p=>{for(let i=0;i<p.length;i+=3)f(p[i],p[i+1],p[i+2])});
+ const ext=L=>{let mn=1e9,mx=-1e9;each(L,(x,y)=>{if(y<mn)mn=y;if(y>mx)mx=y});return[mn,mx]};
+ const band=(L,lo,hi)=>{let sx=0,sy=0,sz=0,k=0;each(L,(x,y,z)=>{if(y>=lo&&y<=hi){sx+=x;sy+=y;sz+=z;k++}});return k?[sx/k,sy/k,sz/k]:null};
+ const piv={};let legTop=-1e9;
+ [1,2].forEach(L=>{if(!V[L])return;const [mn,mx]=ext(L),top=band(L,mx-.06*H,mx);if(!top)return;let h=null,hy=1e9;each(L,(x,y,z)=>{if(y<hy){hy=y;h=[x,y,z]}});const hc=band(L,mn,mn+.07*H)||h;piv[L===1?'armR':'armL']={p:[top[0],mx-.035*H,top[2]],rz:0,h,hc,grip:null}});
+ [3,4].forEach(L=>{if(!V[L])return;const [mn,mx]=ext(L),top=band(L,mx-.05*H,mx);if(!top)return;legTop=Math.max(legTop,mx);piv[L===3?'legR':'legL']={p:[top[0],mx-.02*H,top[2]],rz:0}});
+ if(legTop>-1e9)piv.waist=legTop+.03*H;
+ const tl=geoms.map((g,gi)=>new Uint8Array(((g.idx?g.idx.length:g.pos.length/3)/3)|0).fill(labs[gi]));
+ return{ok:true,anim:{arms:!!(piv.armR||piv.armL),legs:!!(piv.legR&&piv.legL)},tl,piv,caps:{},info:{named:true,n:0,T:0,tot:0,lab:[0,1,2,3,4,5].map(L=>labs.filter(x=>x===L).length)}}}
 function eaSeg(geoms){
  const H=2.45,LB=['core','armR','armL','legR','legL','hips'];
  // --- kaynak (weld)
@@ -1552,7 +1570,7 @@ function rigidMerge(root,skip){const jobs=[];root.traverse(n=>{if(n.isMesh)retur
   const me=new T.Mesh(g,l[0].material);me.castShadow=l[0].castShadow;me.receiveShadow=l[0].receiveShadow;n.add(me);l.forEach(o=>n.remove(o))})}
 function autoBuild(c){if(!c||c.skinned||!c.tpl)return null;const fk=c.flip?1:0;c.autoB=c.autoB||{};if(fk in c.autoB)return c.autoB[fk];let R=null;
  try{const ms=c.tpl.children.filter(m=>m.isMesh&&m.geometry.attributes.position),geoms=ms.map(m=>{const g=m.geometry,p=g.attributes.position,pos=new Float32Array(p.count*3);for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);pos[3*i]=fk?-x:x;pos[3*i+1]=y;pos[3*i+2]=fk?-z:z}return{pos,idx:g.index?g.index.array:null}});
-  const Sg=eaSeg(geoms);
+  const Sg=namedSeg(ms,geoms)||eaSeg(geoms);
   if(Sg.ok){const pv=Sg.piv,H=2.45,legY=pv.legR?pv.legR.p[1]+.02*H:null,tY=pv.waist||(legY!=null?legY+.04*H:1.06),fr={0:{o:[0,tY,0],rz:0},5:{o:[0,1.02,0],rz:0}};
    const low=k=>{const a=pv[k];if(!a||!a.h)return 0;const an=Math.atan2(Math.abs(a.h[0]-a.p[0]),Math.max(.01,a.p[1]-a.h[1]));return an>.6?Math.min(1.4,an-.25):0},lowR=low('armR'),lowL=low('armL');
    [['armR',1,lowR],['armL',2,lowL],['legR',3,0],['legL',4,0]].forEach(([k,L,lw])=>{if(pv[k])fr[L]={o:pv[k].p,rz:lw>0?0:pv[k].rz}});
