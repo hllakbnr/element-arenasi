@@ -1,0 +1,26 @@
+name: Oyun testleri
+# Elle ya da test dosyaları değişince çalışır: bilgisayar (Chromium) ve telefon motoru (Firefox/Gecko) ile
+# turnuva dayanıklılık testi ve iki motor arasında çok oyunculu oyun.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tests/**', '.github/workflows/oyun-testleri.yml']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/fonts.mjs && node tools/vendor.mjs
+      - run: npm i --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox
+      - name: Telefon motoru (Firefox) dayanıklılık
+        run: node tests/soak.mjs firefox phone 90
+      - name: Bilgisayar (Chromium) dayanıklılık
+        run: node tests/soak.mjs chromium desk 90
+      - name: Bilgisayar ↔ telefon çok oyunculu
+        if: always()
+        run: node tests/mp-cross.mjs
