@@ -4,7 +4,7 @@ import {chromium,firefox} from 'playwright';import fs from 'node:fs';import path
 const ROOT=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..'),GAME=ROOT+'/game/',MOCK=fs.readFileSync(ROOT+'/tests/mock-supabase.js','utf8');
 export const errs=[];const subs={},pres={},browsers={};
 const bcast=(name,ev,payload,exceptKey)=>{(subs[name]||[]).forEach(([p,k])=>{if(k!==exceptKey)p.evaluate(([n,e,pl])=>window.__sbRecv&&window.__sbRecv(n,e,pl),[name,ev,payload]).catch(()=>{})})};
-export async function browser(kind){if(process.env.NOFF&&kind==='firefox')kind='chromium';if(!browsers[kind])browsers[kind]=await (kind==='firefox'?firefox:chromium).launch(kind==='firefox'?{firefoxUserPrefs:{'webgl.force-enabled':true,'webgl.disabled':false,'media.peerconnection.ice.loopback':true}}:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});return browsers[kind]}
+export async function browser(kind){if(process.env.NOFF&&kind==='firefox')kind='chromium';if(!browsers[kind])browsers[kind]=await (kind==='firefox'?firefox:chromium).launch(kind==='firefox'?{headless:!process.env.DISPLAY,firefoxUserPrefs:{'layers.acceleration.force-enabled':true,'gfx.webrender.software':true,'webgl.force-enabled':true,'webgl.disabled':false,'media.peerconnection.ice.loopback':true}}:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});return browsers[kind]}
 export async function closeAll(){for(const b of Object.values(browsers))await b.close().catch(()=>{})}
 // kind: chromium|firefox · phone: ea-mobile (uygulama) + dokunmatik + yatay telefon ekranı
 export async function openGame({kind='chromium',phone=false,user=null,save=null,tag='?'}={}){

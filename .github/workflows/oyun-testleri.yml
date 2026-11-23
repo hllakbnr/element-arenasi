@@ -17,10 +17,13 @@ jobs:
           node-version: 20
       - run: node tools/fonts.mjs && node tools/vendor.mjs
       - run: npm i --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox
+      # Firefox'un WebGL'i için yazılımla çizen ekran kartı (Mesa) ve sanal ekran
+      - run: sudo apt-get install -y xvfb libgl1-mesa-dri libegl1 mesa-utils >/dev/null
       - name: Telefon motoru (Firefox) dayanıklılık
-        run: node tests/soak.mjs firefox phone 90
+        run: xvfb-run -a -s '-screen 0 1280x800x24' node tests/soak.mjs firefox phone 90
       - name: Bilgisayar (Chromium) dayanıklılık
+        if: always()
         run: node tests/soak.mjs chromium desk 90
       - name: Bilgisayar ↔ telefon çok oyunculu
         if: always()
-        run: node tests/mp-cross.mjs
+        run: xvfb-run -a -s '-screen 0 1280x800x24' node tests/mp-cross.mjs
